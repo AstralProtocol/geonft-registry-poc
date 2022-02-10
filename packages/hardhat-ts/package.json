@@ -13,6 +13,7 @@
     "accounts": "npx hardhat accounts",
     "checksol": "npx hardhat check"
   },
+  "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-etherscan": "^3.0.0",
