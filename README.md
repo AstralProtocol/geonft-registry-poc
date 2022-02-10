@@ -24,9 +24,17 @@ Monorepo with two packages:
 
 Yarn
 
+## Install
+
+```bash
+git clone https://github.com/AstralProtocol/kolektivo-curacao-geonft-poc.git
+cd kolektivo-curacao-geonft-poc
+yarn install
+```
+
 ### Setup .env file for dapp
 
-Create an Infura Account and an Infura project with IPFS Service, copy `.env.sample` to `.env` and fill in the following fields:
+Create an Infura Account and an Infura project with IPFS Service, copy `packages/dapp/.env.sample` to `packages/dapp/.env` and fill in the following fields:
 
 PROJECT_ID=
 
@@ -38,32 +46,32 @@ To run locally, create a new profile in Chrome and open the Metamask plugin.
 
 Import the test seed phrase: `test test test test test test test test test test test junk`
 
-Under `Networks` click `Add Network` with the following values:
+Under `Networks` click `Show/hide test networks`
 
-- Network Name: localhost:8545
-- RPC URL: <http://localhost:8545>
-- Chain ID: 31337
-- Currency Symbol: ETH
+Open Metamask `Settings`, `Networks`, and select `Localhost 8545`. Set chainId to `31337`
 
-## Install
+Select `Localhost 8545` network.
 
-```bash
-git clone https://github.com/AstralProtocol/kolektivo-curacao-geonft-poc.git
-cd 
-yarn install
-```
+Notice: when running a Localhost node, you may receive this error: `Nonce too high. Expected nonce to be 1 but got N. Note that transactions can't be queued when automining.` As a fix, go to `Settings`, `Advanced`, and click `Reset Account`.
 
 ## Run
 
+### Hardhat Local Node
+
 Open a terminal and run `yarn hardhat:localnode`
 
-Open packages/dapp/webpack.config.js and update devServer...host with your IP Address.
+### Run dapp
+
+Open packages/dapp/webpack.config.js and update devServer...host with your local IP Address.
 
 Open a second terminal and run `yarn dapp:start`
 
 Open your Chrome profile with test Metamask instance and go to <https://YOURIPADDRESS:8080/>
 
-Connect either with your Metamask wallet or Alfajores wallet.
+### Wallet
+
+1) Select Metamask and connect with the localhost node.
+2) Select WalletConnect and scan the QR Code with your Alfajores wallet.
 
 ## Available Scripts
 
