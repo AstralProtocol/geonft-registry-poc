@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
-  IconButton,
   TextareaAutosize,
   TextField,
   Tooltip,
@@ -26,6 +26,7 @@ function AddNFTForm() {
   const { isBusyMinting } = useAppSelector(selectNFTs);
 
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [geojson, setGeojson] = useState(JSON.stringify(geoJson2));
@@ -87,9 +88,10 @@ function AddNFTForm() {
       setDescription('');
       setGeojson(JSON.stringify(geoJson2));
       setFileUrl('');
+      setError('');
       handleClose();
-    } catch (err) {
-      console.error('Failed to save the post: ', err);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -102,7 +104,9 @@ function AddNFTForm() {
         Add GeoNFT
       </Button>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-        <DialogTitle>Create NFT</DialogTitle>
+        <DialogTitle>
+          Create NFT {error && <Alert severity="error">{error}</Alert>}
+        </DialogTitle>
         <DialogContent>
           <form>
             <label htmlFor="upload-file">
@@ -118,18 +122,18 @@ function AddNFTForm() {
               </Button>
             </label>
             <div>
-            {fileUrl && (
-              <img
-                className="rounded mt-4"
-                alt="upload"
-                width="350"
-                style={{ marginTop: '10px' }}
-                src={`${fileUrl.replace(
-                  'ipfs://',
-                  'https://ipfs.infura.io/ipfs/'
-                )}`}
-              />
-            )}
+              {fileUrl && (
+                <img
+                  className="rounded mt-4"
+                  alt="upload"
+                  width="350"
+                  style={{ marginTop: '10px' }}
+                  src={`${fileUrl.replace(
+                    'ipfs://',
+                    'https://ipfs.infura.io/ipfs/'
+                  )}`}
+                />
+              )}
             </div>
             <TextField
               fullWidth
@@ -156,7 +160,7 @@ function AddNFTForm() {
               name="nftGeojson"
               aria-label="empty textarea"
               placeholder="Empty"
-              style={{ width: "100%" }}
+              style={{ width: '100%' }}
               value={geojson}
               onChange={onGeojsonChanged}
             />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { selectWallet, connectWallet, WalletStatusEnums } from './walletSlice';
-import { Grid } from '@mui/material';
+import { Alert, AlertTitle, Grid } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import NFTS from '../nfts/NFTS';
 import CeramicDocs from '../docs/CeramicDocs';
@@ -34,6 +34,25 @@ function Wallet() {
       <Grid container>
         <NFTS />
         <CeramicDocs />
+      </Grid>
+    );
+  } else if (status === WalletStatusEnums.WRONG_NETWORK) {
+    display = (
+      <Grid container>
+        <Alert severity="error">
+          <AlertTitle>Error</AlertTitle>
+          Contract not deployed to this network (chainId {provider.chainId})
+          <br />
+          <br />
+          Please switch to either:
+          <ol>
+            <li>
+              localhost with chainId: 31337 (make sure the hardhat node is
+              running)
+            </li>
+            <li>the Alfajores network</li>
+          </ol>
+        </Alert>
       </Grid>
     );
   }

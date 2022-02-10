@@ -46,7 +46,11 @@ export const connectWallet = createAsyncThunk<void, void, AsyncThunkConfig>(
   'ConnectWallet',
   async (action, { dispatch }) => {
     await dispatch(initWeb3());
-    await dispatch(fetchAcctAndThenLoadNFTs());
+    await dispatch(fetchAcctAndThenLoadNFTs())
+      .unwrap()
+      .catch((error) => {
+        throw error;
+      });
   }
 );
 
@@ -138,7 +142,11 @@ export const fetchAcctAndThenLoadNFTs = createAsyncThunk<
   AsyncThunkConfig
 >('ConnectWallet', async (action, { dispatch }) => {
   await dispatch(fetchAccount());
-  await dispatch(fetchNFTList());
+  await dispatch(fetchNFTList())
+    .unwrap()
+    .catch((error) => {
+      throw error;
+    });
 });
 
 export const fetchAccount = createAsyncThunk<
@@ -198,6 +206,7 @@ export enum WalletStatusEnums {
   DISCONNECTED,
   LOADING,
   CONNECTED,
+  WRONG_NETWORK,
 }
 
 export interface WalletState {
@@ -242,8 +251,8 @@ export const walletSlice = createSlice({
       builder.addCase(connectWallet.pending, (state) => {
         state.status = WalletStatusEnums.LOADING;
       }),
-      builder.addCase(connectWallet.rejected, (state) => {
-        state.status = WalletStatusEnums.DISCONNECTED;
+      builder.addCase(fetchAcctAndThenLoadNFTs.rejected, (state) => {
+        state.status = WalletStatusEnums.WRONG_NETWORK;
       }),
       builder.addCase(fetchAccount.fulfilled, (state, { payload }) => {
         state.address = payload.address;
