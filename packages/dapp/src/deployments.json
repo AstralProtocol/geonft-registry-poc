@@ -549,7 +549,7 @@
       "chainId": "44787",
       "contracts": {
         "GEONFT": {
-          "address": "0x4161b47F4450d969D90eaa8e9c718a90D393F568",
+          "address": "0xf76a8F38aBFdBDD05c10Bcd4Ccc861F8f24Ba4Ab",
           "abi": [
             {
               "inputs": [],

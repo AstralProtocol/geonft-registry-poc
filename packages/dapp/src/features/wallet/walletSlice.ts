@@ -14,6 +14,7 @@ import { AbstractProvider } from 'web3-core/types';
 import { fetchNFTList } from '../nfts/nftsSlice';
 import { config as dotEnvConfig } from 'dotenv';
 import { create, IPFSHTTPClient } from 'ipfs-http-client';
+import { CeloProvider } from '@celo-tools/celo-ethers-wrapper';
 
 dotEnvConfig({ path: '../../../.env' });
 
@@ -105,6 +106,8 @@ export const initWeb3 = createAsyncThunk<
 
     const provider = await web3Modal.connect();
 
+    console.log(provider);
+
     // Subscribe to accounts change
     provider.on('accountsChanged', (accounts: string[]) => {
       console.log(accounts);
@@ -115,6 +118,11 @@ export const initWeb3 = createAsyncThunk<
       console.log('Web3 chainChanged:');
       console.log(chainId);
       dispatch(fetchAcctAndThenLoadNFTs());
+    });
+
+    provider.on('block', (blockNumber: number) => {
+      console.log(blockNumber);
+      dispatch(fetchLastBlock());
     });
 
     // Subscribe to session disconnection
@@ -147,6 +155,25 @@ export const fetchAcctAndThenLoadNFTs = createAsyncThunk<
     .catch((error) => {
       throw error;
     });
+});
+
+export const fetchLastBlock = createAsyncThunk<
+  { lastBlockNumber: number},
+  void,
+  AsyncThunkConfig
+>('fetchLastBlock', async (action, thunkAPI) => {
+  let lastBlock = null;
+  try {
+    const provider = thunkAPI.getState().wallet.provider;
+    const celoProvider = new CeloProvider(provider.http.url);
+    lastBlock = await celoProvider.getBlockNumber();
+  } catch (error) {
+    console.log('Error fetching last block', error);
+    throw error;
+  }
+  return {
+    lastBlockNumber: lastBlock,
+  };
 });
 
 export const fetchAccount = createAsyncThunk<
@@ -216,6 +243,7 @@ export interface WalletState {
   balance: BigNumber | null;
   status: WalletStatusEnums;
   ipfsClient: IPFSHTTPClient | null;
+  blockNumber: number | null;
 }
 
 export const initialState: WalletState = {
@@ -225,6 +253,7 @@ export const initialState: WalletState = {
   balance: null,
   status: WalletStatusEnums.DISCONNECTED,
   ipfsClient: null,
+  blockNumber: null
 };
 
 export const walletSlice = createSlice({
@@ -259,6 +288,9 @@ export const walletSlice = createSlice({
         state.balance = payload.balance;
         state.status = payload.status;
         state.ipfsClient = payload.ipfsClient;
+      }),
+      builder.addCase(fetchLastBlock.fulfilled, (state, { payload }) => {
+        state.blockNumber = payload.lastBlockNumber;
       }),
       builder.addCase(disconnect.rejected, (state) => {
         console.log('disconnect failed');

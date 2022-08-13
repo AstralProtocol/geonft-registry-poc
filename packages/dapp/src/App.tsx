@@ -20,7 +20,7 @@ import { selectDocs } from './features/docs/docsSlice';
 import { ethers } from 'ethers';
 
 function Footer() {
-  const { address, balance, status } = useAppSelector(selectWallet);
+  const { address, balance, status, blockNumber } = useAppSelector(selectWallet);
   let formattedBalance = '';
   if (balance) {
     formattedBalance = ethers.utils.formatEther(balance);
@@ -72,8 +72,13 @@ function Footer() {
           </Grid>
         )}
         {connected && (
-          <Grid item xs={12}>
-            {address}
+          <Grid>
+            <Grid item xs={12}>
+              {address}
+            </Grid>
+            <Grid item xs={12}>
+              Block Number: {blockNumber}
+            </Grid>
           </Grid>
         )}
       </Grid>
