@@ -1,5 +1,5 @@
 {
-  "name": "@project/monorepo",
+  "name": "monorepo",
   "version": "1.0.0",
   "keywords": [
     "ethereum",
@@ -8,37 +8,28 @@
     "yarn"
   ],
   "private": true,
+  "workspaces": ["packages/dapp", "packages/hardhat-ts"],
   "scripts": {
-    "dapp:start": "yarn workspace @project/dapp start",
-    "dapp:test": "yarn workspace @project/dapp test",
-    "dapp:lint": "yarn workspace @project/dapp lint",
-    "dapp:format": "yarn workspace @project/dapp format",
-    "dapp:check": "yarn workspace @project/dapp checkformat",
-    "dapp:type-check": "yarn workspace @project/dapp type-check",
-    "dapp:webpack": "yarn workspace @project/dapp webpack",
-    "hardhat:clean": "yarn workspace @project/hardhat-ts clean",
-    "hardhat:compile": "yarn workspace @project/hardhat-ts compile",
-    "hardhat:watch": "yarn workspace @project/hardhat-ts watch",
-    "hardhat:localnode": "yarn workspace @project/hardhat-ts localnode",
-    "hardhat:test": "yarn workspace @project/hardhat-ts test",
-    "hardhat:coverage": "yarn workspace @project/hardhat-ts coverage",
-    "hardhat:deployalfa": "yarn workspace @project/hardhat-ts deployalfa",
-    "hardhat:deploycelo": "yarn workspace @project/hardhat-ts deploycelo",
-    "hardhat:accounts": "yarn workspace @project/hardhat-ts accounts",
-    "hardhat:check": "yarn workspace @project/hardhat-ts checksol"
+    "dapp:start": "yarn workspace dapp start",
+    "dapp:test": "yarn workspace dapp test",
+    "dapp:lint": "yarn workspace dapp lint",
+    "dapp:format": "yarn workspace dapp format",
+    "dapp:check": "yarn workspace dapp checkformat",
+    "dapp:type-check": "yarn workspace dapp type-check",
+    "dapp:webpack": "yarn workspace dapp webpack",
+    "hardhat:clean": "yarn workspace hardhat-ts clean",
+    "hardhat:compile": "yarn workspace hardhat-ts compile",
+    "hardhat:watch": "yarn workspace hardhat-ts watch",
+    "hardhat:localnode": "yarn workspace hardhat-ts localnode",
+    "hardhat:test": "yarn workspace hardhat-ts test",
+    "hardhat:coverage": "yarn workspace hardhat-ts coverage",
+    "hardhat:deployalfa": "yarn workspace hardhat-ts deployalfa",
+    "hardhat:deploycelo": "yarn workspace hardhat-ts deploycelo",
+    "hardhat:accounts": "yarn workspace hardhat-ts accounts",
+    "hardhat:lint": "yarn workspace hardhat-ts lint"
   },
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ]
-  },
-  "nohoist": [
-    "**/@nomiclabs/**",
-    "**/typescript",
-    "**/ts-node"
-  ],
   "devDependencies": {
-    "hardhat": "^2.8.3",
-    "ts-node": "^10.4.0"
+    "hardhat": "^2.9.3",
+    "ts-node": "^10.7.0"
   }
 }

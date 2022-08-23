@@ -1,15 +1,19 @@
 {
-    "compilerOptions": {
-      "target": "es2018",
-      "module": "commonjs",
-      "strict": true,
-      "esModuleInterop": true,
-      "outDir": "dist"
-    },
-    "include": [
-      "hardhat.config.ts",
-      "./test",
-      "./deploy"
-    ],
-    "files": ["./hardhat.config.ts"]
-  }
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "dist"
+  },
+  "include": [
+    "hardhat.config.ts",
+    "./test",
+    "./deploy",
+    "./typechain",
+    "./tasks",
+    "./utils",
+    ".eslintrc.js",
+  ],
+  "files": ["./hardhat.config.ts"]
+}

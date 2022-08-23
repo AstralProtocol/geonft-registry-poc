@@ -1,19 +1,20 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-const func: DeployFunction = async function(hre: HardhatRuntimeEnvironment) {
+const geoNFTDeployFunc: DeployFunction = async (
+  hre: HardhatRuntimeEnvironment
+) => {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
 
-  // the following will only deploy "GenericMetaTxProcessor" if the contract was never deployed or if the code changed since last deployment
-  await deploy("GEONFT", {
+  await deploy("GeoNFT", {
     from: deployer,
     // gas: 4000000,
     args: [],
   });
 
-  console.log("deployed GEONFT");
+  console.log("deployed GeoNFT");
 };
-export default func;
+export default geoNFTDeployFunc;
