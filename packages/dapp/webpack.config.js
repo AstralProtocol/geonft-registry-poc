@@ -4,6 +4,7 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require('webpack');
+const Dotenv = require("dotenv-webpack");
 
 module.exports = {
   entry: "./src/index.tsx",
@@ -74,5 +75,8 @@ module.exports = {
       process: 'process/browser',
       Buffer: ['buffer', 'Buffer'],
     }),
+    new Dotenv({
+      systemvars: true,
+    }),  
   ],
 };

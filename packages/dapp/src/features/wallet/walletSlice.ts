@@ -12,18 +12,17 @@ import Web3Modal from 'web3modal';
 import { JsonRpcPayload, JsonRpcResponse } from 'web3-core-helpers';
 import { AbstractProvider } from 'web3-core/types';
 import { fetchNFTList } from '../nfts/nftsSlice';
-import { config as dotEnvConfig } from 'dotenv';
 import { create, IPFSHTTPClient } from 'ipfs-http-client';
-import { CeloProvider } from '@celo-tools/celo-ethers-wrapper';
-
-dotEnvConfig({ path: '../../../.env' });
+import { CeloProvider, CeloWallet } from '@celo-tools/celo-ethers-wrapper';
 
 const options = {
   host: 'ipfs.infura.io',
   port: 5001,
   protocol: 'https',
-
-  auth: process.env.PROJECT_ID + ':' + process.env.PROJECT_SECRET,
+  apiPath: '/api/v0',
+  headers: {
+    authorization: 'Basic ' + Buffer.from(process.env.REACT_APP_PROJECT_ID + ':' + process.env.REACT_APP_PROJECT_SECRET).toString('base64')
+  }
 };
 
 export declare class WalletConnectWeb3Provider
@@ -167,6 +166,11 @@ export const fetchLastBlock = createAsyncThunk<
     const provider = thunkAPI.getState().wallet.provider;
     const celoProvider = new CeloProvider(provider.http.url);
     lastBlock = await celoProvider.getBlockNumber();
+
+    const celoWallet = new CeloWallet(thunkAPI.getState().wallet.provider);
+    const balance = await celoWallet.getBalance();
+    console.log(balance);
+
   } catch (error) {
     console.log('Error fetching last block', error);
     throw error;

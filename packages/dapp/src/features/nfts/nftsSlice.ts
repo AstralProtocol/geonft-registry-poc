@@ -45,7 +45,7 @@ export const fetchNFTList = createAsyncThunk<
       networkMapping[chainIdStr as keyof typeof networkMapping];
 
     if (networkMappingForChain !== undefined) {
-      const geoNFTMapping = networkMappingForChain[0]['contracts']['GEONFT'];
+      const geoNFTMapping = networkMappingForChain[0]['contracts']['GeoNFT'];
 
       const signer = web3Provider.getSigner();
 
@@ -57,7 +57,7 @@ export const fetchNFTList = createAsyncThunk<
 
       // Get a list of NFTs owned by the user
       try {
-        const result = await geoNFTContract.getAllTokens();
+        const result = await geoNFTContract.getTokensByOwner(address);
         const { 0: tokenIds, 1: metadataURIs, 2: geojsons } = result;
         console.log(tokenIds);
         console.log(metadataURIs);

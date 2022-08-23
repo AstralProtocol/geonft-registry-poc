@@ -13,9 +13,6 @@ Monorepo with two packages:
 
 ## TODO
 
-- hardhat-ts
-  - add Verifiable Spatial Data Registry mock
-
 - dapp
   - Add wallet mock to expand testing in Jest
   - update decentralized data storage methods
