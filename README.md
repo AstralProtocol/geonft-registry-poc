@@ -33,9 +33,9 @@ yarn install
 
 Create an Infura Account and an Infura project with IPFS Service, copy `packages/dapp/.env.sample` to `packages/dapp/.env` and fill in the following fields:
 
-PROJECT_ID=
+REACT_APP_PROJECT_ID=
 
-PROJECT_SECRET=
+REACT_APP_PROJECT_SECRET=
 
 ### Setup Metamask
 
