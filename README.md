@@ -1,4 +1,4 @@
-# Kolektivo Curaçao GeoNFT Proof-of-Concept
+# GeoNFT and Spatial Data Registry Proof-of-Concept
 
 Monorepo with two packages:
 
@@ -24,8 +24,8 @@ Yarn
 ## Install
 
 ```bash
-git clone https://github.com/AstralProtocol/kolektivo-curacao-geonft-poc.git
-cd kolektivo-curacao-geonft-poc
+git clone https://github.com/AstralProtocol/geonft-registry-poc.git
+cd geonft-registry-poc
 yarn install
 ```
 
