@@ -195,6 +195,77 @@ describe("registry", () => {
       const tokensAfterUnregister = await sdRegistry.getAllGeoNFTs();
       expect(tokensAfterUnregister.length).to.equal(0);
     });
+
+    it("contract owner mints multiple GeoNFT, adds to registry, then removes from registry", async () => {
+      const tokenId1 = ethers.BigNumber.from(0);
+      const tokenId2 = ethers.BigNumber.from(1);
+      const tokenId3 = ethers.BigNumber.from(2);
+      const tokenURI = "0";
+
+      // mint GeoNFT
+      await expect(
+        geoNFT.safeMint(other.address, tokenURI, GEOJSON1.toString())
+      )
+        .to.emit(geoNFT, "Transfer")
+        .withArgs(ZERO_ADDRESS, other.address, tokenId1);
+
+      await expect(
+        geoNFT.safeMint(other.address, tokenURI, GEOJSON1.toString())
+      )
+        .to.emit(geoNFT, "Transfer")
+        .withArgs(ZERO_ADDRESS, other.address, tokenId2);
+
+      await expect(
+        geoNFT.safeMint(other.address, tokenURI, GEOJSON1.toString())
+      )
+        .to.emit(geoNFT, "Transfer")
+        .withArgs(ZERO_ADDRESS, other.address, tokenId3);
+
+      // register minted GeoNFT with Spatial Data Registry
+      const registerTX1: ContractTransaction = await sdRegistry.registerGeoNFT(
+        tokenId1,
+        CENTROID
+      );
+      const registerTX2: ContractTransaction = await sdRegistry.registerGeoNFT(
+        tokenId2,
+        CENTROID
+      );
+      const registerTX3: ContractTransaction = await sdRegistry.registerGeoNFT(
+        tokenId3,
+        CENTROID
+      );
+
+      const registerReceipt1: ContractReceipt = await registerTX1.wait();
+      expect(registerReceipt1.status).to.equal(1);
+      const registerReceipt2: ContractReceipt = await registerTX2.wait();
+      expect(registerReceipt2.status).to.equal(1);
+      const registerReceipt3: ContractReceipt = await registerTX3.wait();
+      expect(registerReceipt3.status).to.equal(1);
+
+      // get all tokens in the registry
+      const tokens = await sdRegistry.getAllGeoNFTs();
+      expect(tokens.length).to.equal(3);
+
+      // unregister second minted GeoNFT with Spatial Data Registry
+      const unregisterTX1: ContractTransaction =
+        await sdRegistry.unregisterGeoNFT(tokenId2);
+      const unregisterReceipt1: ContractReceipt = await unregisterTX1.wait();
+      expect(unregisterReceipt1.status).to.equal(1);
+
+      // get all tokens in the registry
+      const tokensAfterUnregister1 = await sdRegistry.getAllGeoNFTs();
+      expect(tokensAfterUnregister1.length).to.equal(2);
+
+      // unregister another token
+      const unregisterTX2: ContractTransaction =
+        await sdRegistry.unregisterGeoNFT(tokenId3);
+      const unregisterReceipt2: ContractReceipt = await unregisterTX2.wait();
+      expect(unregisterReceipt2.status).to.equal(1);
+
+      // get all tokens in the registry again
+      const tokensAfterUnregister2 = await sdRegistry.getAllGeoNFTs();
+      expect(tokensAfterUnregister2.length).to.equal(1);
+    });
   });
 
   describe("update geonft topology", async () => {

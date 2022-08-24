@@ -79,13 +79,17 @@ contract SDRegistry is ReentrancyGuard, Ownable {
         if (tokenArray.length == 1) {
             tokenArray.pop();
         } else {
-            uint256[] memory newData = new uint256[](tokenArray.length - 1);
+            uint256[] memory newTokenArray = new uint256[](tokenArray.length - 1);
             uint256 counter = 0;
-            for (uint256 i = 0; i < tokenArray.length - 1; i++) {
+            for (uint256 i = 0; i < tokenArray.length; i++) {
                 if (tokenArray[i] != _tokenId) {
-                    newData[counter] = tokenArray[i];
+                    newTokenArray[counter] = tokenArray[i];
                     counter++;
                 }
+            }
+
+            if (counter == tokenArray.length - 1) {
+                tokenArray = newTokenArray;
             }
         }
 
