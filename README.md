@@ -3,7 +3,7 @@
 Monorepo with two packages:
 
 - hardhat-ts: a hardhat typescript project
-  - runs and deploys the NFT contract to a local node
+  - runs and deploys the NFT contracts to a local node
   - deploys contract to Alfajores testnet
   - deploys contract to Celo mainnet
 - dapp: a React, Redux web application
@@ -15,7 +15,6 @@ Monorepo with two packages:
 
 - dapp
   - Add wallet mock to expand testing in Jest
-  - update decentralized data storage methods
 
 ## Requirements
 
