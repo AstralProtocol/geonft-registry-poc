@@ -25,12 +25,13 @@ const options = {
   }
 };
 
+// const KOL_AUTH = process.env.REACT_APP_X_KOL_AUTH || '';
 // const options = {
 //   host: 'ipfs.rpcs.dev',
 //   port: 5001,
 //   protocol: 'https',
 //   headers: {
-//     'x-kol-auth': process.env.REACT_APP_X_KOL_AUTH
+//     'x-kol-auth': KOL_AUTH
 //   }
 // };
 
