@@ -8,7 +8,8 @@ const geoNFTDeployFunc: DeployFunction = async (
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-
+  console.log("Deployer:", deployer);
+  
   await deploy("GeoNFT", {
     from: deployer,
     // gas: 4000000,
