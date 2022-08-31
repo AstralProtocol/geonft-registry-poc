@@ -30,7 +30,7 @@ const options = {
 //   port: 5001,
 //   protocol: 'https',
 //   headers: {
-//     'x-kol-auth': process.env.REACT_APP_X-KOL-AUTH
+//     'x-kol-auth': process.env.REACT_APP_X_KOL_AUTH
 //   }
 // };
 
