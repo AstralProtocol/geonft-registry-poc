@@ -25,6 +25,15 @@ const options = {
   }
 };
 
+// const options = {
+//   host: 'ipfs.rpcs.dev',
+//   port: 5001,
+//   protocol: 'https',
+//   headers: {
+//     'x-kol-auth': process.env.REACT_APP_X-KOL-AUTH
+//   }
+// };
+
 export declare class WalletConnectWeb3Provider
   extends WalletConnectProvider
   implements AbstractProvider
@@ -164,13 +173,18 @@ export const fetchLastBlock = createAsyncThunk<
   let lastBlock = null;
   try {
     const provider = thunkAPI.getState().wallet.provider;
-    const celoProvider = new CeloProvider(provider.http.url);
-    lastBlock = await celoProvider.getBlockNumber();
+    const web3Provider = new ethers.providers.Web3Provider(provider);
+  
+    const chainId: number = await (await web3Provider.getNetwork()).chainId;
 
-    const celoWallet = new CeloWallet(thunkAPI.getState().wallet.provider);
-    const balance = await celoWallet.getBalance();
-    console.log(balance);
-
+    if (chainId === 44787 || chainId === 42220) {
+      const celoProvider = new CeloProvider(provider.http.url);
+      lastBlock = await celoProvider.getBlockNumber();
+      const block1 = await celoProvider.getBlock(1);
+      console.log(block1);
+    } else {
+      lastBlock = await web3Provider.getBlockNumber();
+    }
   } catch (error) {
     console.log('Error fetching last block', error);
     throw error;
