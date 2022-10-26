@@ -29,7 +29,7 @@ module.exports = {
   },
   devServer: {
     static: path.join(__dirname, "src"),
-    host: '192.168.1.120',
+    host: 'localhost',
     port: 8080,
     server: {
       type: 'https',
