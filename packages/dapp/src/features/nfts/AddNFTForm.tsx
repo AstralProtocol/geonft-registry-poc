@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 import {
   Alert,
@@ -10,27 +10,24 @@ import {
   Grid,
   TextareaAutosize,
   TextField,
-  Tooltip,
-} from '@mui/material';
+} from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { selectWallet } from '../wallet/walletSlice';
-import { mint, selectNFTs } from './nftsSlice';
-import geoJson2 from './geojson2.json';
-import { LoadingButton } from '@mui/lab';
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { selectWallet } from "../wallet/walletSlice";
+import { mint, selectNFTs } from "./nftsSlice";
+// import geoJson2 from "./geojson2.json";
+import { LoadingButton } from "@mui/lab";
 
-function AddNFTForm() {
+function AddNFTForm({ open, geojson, closeForm }: NFTProps) {
   const dispatch = useAppDispatch();
 
   const { ipfsClient } = useAppSelector(selectWallet);
   const { isBusyMinting } = useAppSelector(selectNFTs);
 
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState('');
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [geojson, setGeojson] = useState(JSON.stringify(geoJson2));
-  const [fileUrl, setFileUrl] = useState('');
+  const [error, setError] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [fileUrl, setFileUrl] = useState("");
 
   const onNameChanged = (e: {
     target: { value: React.SetStateAction<string> };
@@ -38,14 +35,11 @@ function AddNFTForm() {
   const onDescriptionChanged = (e: {
     target: { value: React.SetStateAction<string> };
   }) => setDescription(e.target.value);
-  const onGeojsonChanged = (e: {
-    target: { value: React.SetStateAction<string> };
-  }) => setGeojson(e.target.value);
 
   const onFileLoadChange = async (e: any) => {
     const file = e.target.files[0];
     if (ipfsClient == null) {
-      throw new Error('IPFS client is not initialized');
+      throw new Error("IPFS client is not initialized");
     }
     try {
       const added = await ipfsClient.add(file, {
@@ -56,22 +50,23 @@ function AddNFTForm() {
       const url = `ipfs://${added.path}`;
       setFileUrl(url);
     } catch (error) {
-      console.log('Error uploading file: ', error);
+      console.log("Error uploading file: ", error);
     }
   };
 
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
   const handleClose = () => {
-    setOpen(false);
+    closeForm();
   };
 
   const handleSubmit = async () => {
     if (ipfsClient == null) {
-      throw new Error('IPFS client is not initialized');
+      throw new Error("IPFS client is not initialized");
     }
+
+    if (!geojson) {
+      throw new Error("GeoJSON is not defined");
+    }
+
     try {
       const metadata = {
         name: name,
@@ -84,11 +79,10 @@ function AddNFTForm() {
       await dispatch(
         mint({ metadataURI: metaRecv.path, geojson: geojson })
       ).unwrap();
-      setName('');
-      setDescription('');
-      setGeojson(JSON.stringify(geoJson2));
-      setFileUrl('');
-      setError('');
+      setName("");
+      setDescription("");
+      setFileUrl("");
+      setError("");
       handleClose();
     } catch (err: any) {
       setError(err.message);
@@ -97,12 +91,6 @@ function AddNFTForm() {
 
   return (
     <div>
-      <Button variant="contained" onClick={handleOpen}>
-        <Tooltip title="Add NFT" placement="top">
-          <i className="material-icons">add</i>
-        </Tooltip>
-        Add GeoNFT
-      </Button>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
         <DialogTitle>
           Create NFT {error && <Alert severity="error">{error}</Alert>}
@@ -111,7 +99,7 @@ function AddNFTForm() {
           <form>
             <label htmlFor="upload-file">
               <input
-                style={{ display: 'none' }}
+                style={{ display: "none" }}
                 id="upload-file"
                 name="upload-file"
                 type="file"
@@ -127,10 +115,10 @@ function AddNFTForm() {
                   className="rounded mt-4"
                   alt="upload"
                   width="350"
-                  style={{ marginTop: '10px' }}
+                  style={{ marginTop: "10px" }}
                   src={`${fileUrl.replace(
-                    'ipfs://',
-                    'https://ipfs.infura.io/ipfs/'
+                    "ipfs://",
+                    "https://ipfs.infura.io/ipfs/"
                   )}`}
                 />
               )}
@@ -155,15 +143,11 @@ function AddNFTForm() {
               onChange={onDescriptionChanged}
               margin="normal"
             />
-            <TextareaAutosize
-              id="nftGeojson"
-              name="nftGeojson"
-              aria-label="empty textarea"
-              placeholder="Empty"
-              style={{ width: '100%' }}
-              value={geojson}
-              onChange={onGeojsonChanged}
-            />
+            <div>
+              <pre>
+                {geojson && JSON.stringify(JSON.parse(geojson), null, 2)}
+              </pre>
+            </div>
           </form>
         </DialogContent>
         <DialogActions>
@@ -194,6 +178,12 @@ function AddNFTForm() {
       </Dialog>
     </div>
   );
+}
+
+interface NFTProps {
+  open: boolean;
+  geojson?: string;
+  closeForm: () => void;
 }
 
 export default AddNFTForm;

@@ -4,25 +4,31 @@ import {
   createSlice,
   Dispatch,
   PayloadAction,
-} from '@reduxjs/toolkit';
-import { RootState } from '../../app/store';
-import WalletConnectProvider from '@walletconnect/web3-provider';
-import { BigNumber, ethers } from 'ethers';
-import Web3Modal from 'web3modal';
-import { JsonRpcPayload, JsonRpcResponse } from 'web3-core-helpers';
-import { AbstractProvider } from 'web3-core/types';
-import { fetchNFTList } from '../nfts/nftsSlice';
-import { create, IPFSHTTPClient } from 'ipfs-http-client';
-import { CeloProvider, CeloWallet } from '@celo-tools/celo-ethers-wrapper';
+} from "@reduxjs/toolkit";
+import { RootState } from "../../app/store";
+import WalletConnectProvider from "@walletconnect/web3-provider";
+import { BigNumber, ethers } from "ethers";
+import Web3Modal from "web3modal";
+import { JsonRpcPayload, JsonRpcResponse } from "web3-core-helpers";
+import { AbstractProvider } from "web3-core/types";
+import { fetchNFTList } from "../nfts/nftsSlice";
+import { create, IPFSHTTPClient } from "ipfs-http-client";
+import { CeloProvider, CeloWallet } from "@celo-tools/celo-ethers-wrapper";
 
 const options = {
-  host: 'ipfs.infura.io',
+  host: "ipfs.infura.io",
   port: 5001,
-  protocol: 'https',
-  apiPath: '/api/v0',
+  protocol: "https",
+  apiPath: "/api/v0",
   headers: {
-    authorization: 'Basic ' + Buffer.from(process.env.REACT_APP_PROJECT_ID + ':' + process.env.REACT_APP_PROJECT_SECRET).toString('base64')
-  }
+    authorization:
+      "Basic " +
+      Buffer.from(
+        process.env.REACT_APP_PROJECT_ID +
+          ":" +
+          process.env.REACT_APP_PROJECT_SECRET
+      ).toString("base64"),
+  },
 };
 
 // const KOL_AUTH = process.env.REACT_APP_X_KOL_AUTH || '';
@@ -53,7 +59,7 @@ type AsyncThunkConfig = {
 };
 
 export const connectWallet = createAsyncThunk<void, void, AsyncThunkConfig>(
-  'ConnectWallet',
+  "ConnectWallet",
   async (action, { dispatch }) => {
     await dispatch(initWeb3());
     await dispatch(fetchAcctAndThenLoadNFTs())
@@ -72,7 +78,7 @@ export const initWeb3 = createAsyncThunk<
   },
   void,
   AsyncThunkConfig
->('InitWeb3', async (action, { dispatch }) => {
+>("InitWeb3", async (action, { dispatch }) => {
   // const celoTestnet = {
   //   chainId: "0xaef3",
   //   chainName: "Alfajores Testnet",
@@ -104,8 +110,8 @@ export const initWeb3 = createAsyncThunk<
           package: WalletConnectProvider,
           options: {
             rpc: {
-              44787: 'https://alfajores-forno.celo-testnet.org',
-              42220: 'https://forno.celo.org',
+              44787: "https://alfajores-forno.celo-testnet.org",
+              42220: "https://forno.celo.org",
             },
           },
         },
@@ -118,29 +124,29 @@ export const initWeb3 = createAsyncThunk<
     console.log(provider);
 
     // Subscribe to accounts change
-    provider.on('accountsChanged', (accounts: string[]) => {
+    provider.on("accountsChanged", (accounts: string[]) => {
       console.log(accounts);
     });
 
     // Subscribe to chainId change
-    provider.on('chainChanged', (chainId: number) => {
-      console.log('Web3 chainChanged:');
+    provider.on("chainChanged", (chainId: number) => {
+      console.log("Web3 chainChanged:");
       console.log(chainId);
       dispatch(fetchAcctAndThenLoadNFTs());
     });
 
-    provider.on('block', (blockNumber: number) => {
+    provider.on("block", (blockNumber: number) => {
       console.log(blockNumber);
       dispatch(fetchLastBlock());
     });
 
     // Subscribe to session disconnection
-    provider.on('disconnect', (code: number, reason: string) => {
-      console.log('Web3 disconnect:');
+    provider.on("disconnect", (code: number, reason: string) => {
+      console.log("Web3 disconnect:");
       console.log(code, reason);
     });
 
-    console.log('Connected to wallet');
+    console.log("Connected to wallet");
 
     return {
       web3Modal,
@@ -148,7 +154,7 @@ export const initWeb3 = createAsyncThunk<
       status: WalletStatusEnums.LOADING,
     };
   } catch (error) {
-    console.log('Error initializing web3', error);
+    console.log("Error initializing web3", error);
     throw error;
   }
 });
@@ -157,7 +163,7 @@ export const fetchAcctAndThenLoadNFTs = createAsyncThunk<
   void,
   void,
   AsyncThunkConfig
->('ConnectWallet', async (action, { dispatch }) => {
+>("ConnectWallet", async (action, { dispatch }) => {
   await dispatch(fetchAccount());
   await dispatch(fetchNFTList())
     .unwrap()
@@ -167,15 +173,15 @@ export const fetchAcctAndThenLoadNFTs = createAsyncThunk<
 });
 
 export const fetchLastBlock = createAsyncThunk<
-  { lastBlockNumber: number},
+  { lastBlockNumber: number },
   void,
   AsyncThunkConfig
->('fetchLastBlock', async (action, thunkAPI) => {
+>("fetchLastBlock", async (action, thunkAPI) => {
   let lastBlock = null;
   try {
     const provider = thunkAPI.getState().wallet.provider;
     const web3Provider = new ethers.providers.Web3Provider(provider);
-  
+
     const chainId: number = await (await web3Provider.getNetwork()).chainId;
 
     if (chainId === 44787 || chainId === 42220) {
@@ -187,7 +193,7 @@ export const fetchLastBlock = createAsyncThunk<
       lastBlock = await web3Provider.getBlockNumber();
     }
   } catch (error) {
-    console.log('Error fetching last block', error);
+    console.log("Error fetching last block", error);
     throw error;
   }
   return {
@@ -204,20 +210,20 @@ export const fetchAccount = createAsyncThunk<
   },
   void,
   AsyncThunkConfig
->('FetchAccount', async (_, thunkAPI) => {
+>("FetchAccount", async (_, thunkAPI) => {
   try {
     const provider = thunkAPI.getState().wallet.provider;
 
     if (!provider) {
-      throw new Error('provider not initialized');
+      throw new Error("provider not initialized");
     }
     const web3Provider = new ethers.providers.Web3Provider(provider);
     const signer = web3Provider.getSigner();
     const address = await signer.getAddress();
-    console.log('Fetched account:', address);
+    console.log("Fetched account:", address);
     // if (!address) throw 'Account disconnected';
     const balance = await web3Provider.getBalance(address);
-    console.log('balance:', balance);
+    console.log("balance:", balance);
 
     const ipfsClient = create(options);
     return {
@@ -227,7 +233,7 @@ export const fetchAccount = createAsyncThunk<
       ipfsClient,
     };
   } catch (error) {
-    console.log('Error fetching account address', error);
+    console.log("Error fetching account address", error);
     throw error;
   }
 });
@@ -236,14 +242,14 @@ export const disconnect = createAsyncThunk<
   { provider: null; status: WalletStatusEnums },
   void,
   AsyncThunkConfig
->('Disconnect', async (_, thunkAPI) => {
-  console.log('disconnecting');
+>("Disconnect", async (_, thunkAPI) => {
+  console.log("disconnecting");
   await thunkAPI.getState().wallet.web3Modal?.clearCachedProvider();
   window.location.reload();
 
   return {
     provider: null,
-    address: '',
+    address: "",
     status: WalletStatusEnums.DISCONNECTED,
   };
 });
@@ -268,15 +274,15 @@ export interface WalletState {
 export const initialState: WalletState = {
   web3Modal: null,
   provider: null,
-  address: '',
+  address: "",
   balance: null,
   status: WalletStatusEnums.DISCONNECTED,
   ipfsClient: null,
-  blockNumber: null
+  blockNumber: null,
 };
 
 export const walletSlice = createSlice({
-  name: 'WalletReducer',
+  name: "WalletReducer",
   initialState,
   // The `reducers` field lets us define reducers and generate associated actions
   reducers: {
@@ -312,7 +318,7 @@ export const walletSlice = createSlice({
         state.blockNumber = payload.lastBlockNumber;
       }),
       builder.addCase(disconnect.rejected, (state) => {
-        console.log('disconnect failed');
+        console.log("disconnect failed");
       }),
       builder.addCase(disconnect.fulfilled, (state, { payload }) => {
         state.provider = payload.provider;

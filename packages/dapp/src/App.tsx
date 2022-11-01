@@ -1,37 +1,47 @@
-import React from 'react';
-import { useAppSelector, useAppDispatch } from './app/hooks';
+import React, { useEffect } from "react";
+import { useAppSelector, useAppDispatch } from "./app/hooks";
 import {
   disconnect,
   selectWallet,
   WalletStatusEnums,
-} from './features/wallet/walletSlice';
-import Wallet from './features/wallet/Wallet';
-import { ThemeProvider } from '@mui/material/styles';
+} from "./features/wallet/walletSlice";
+import Wallet from "./features/wallet/Wallet";
+import Map from "./features/map/Map";
+import { ThemeProvider } from "@mui/material/styles";
 import {
   Button,
   Container,
   CssBaseline,
   Grid,
   Typography,
-} from '@mui/material';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import theme from './theme';
-import { selectDocs } from './features/docs/docsSlice';
-import { ethers } from 'ethers';
+} from "@mui/material";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import theme from "./theme";
+import { selectDocs, readDocument } from "./features/docs/docsSlice";
+import { ethers } from "ethers";
 
 function Footer() {
-  const { address, balance, status, blockNumber } = useAppSelector(selectWallet);
-  let formattedBalance = '';
+  const { docs, isBusy } = useAppSelector(selectDocs);
+  const { address, balance, status, blockNumber } =
+    useAppSelector(selectWallet);
+  let formattedBalance = "";
   if (balance) {
     formattedBalance = ethers.utils.formatEther(balance);
   }
   const { ceramic } = useAppSelector(selectDocs);
   const dispatch = useAppDispatch();
 
+  console.log("DOCS APP: ", docs);
+  useEffect(() => {
+    if (status === WalletStatusEnums.CONNECTED) {
+      dispatch(readDocument());
+    }
+  }, [status]);
+
   const connected = status === WalletStatusEnums.CONNECTED;
   return (
     <Typography
-      component={'div'}
+      component={"div"}
       variant="body2"
       color="text.secondary"
       align="center"
@@ -86,30 +96,34 @@ function Footer() {
   );
 }
 
-class App extends React.Component {
-  render() {
-    return (
-      <ThemeProvider theme={theme}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-        <CssBaseline />
-        <Container maxWidth="sm">
-          <Grid container rowSpacing={5}>
-            <Grid item xs={12}>
-              <Typography variant="h4" component="h1" gutterBottom>
-                Kolektivo Curaçao GeoNFT PoC
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Wallet />
-            </Grid>
-            <Grid item xs={12}>
-              <Footer />
-            </Grid>
+function App() {
+  const { status } = useAppSelector(selectWallet);
+  const connected = status === WalletStatusEnums.CONNECTED;
+
+  return (
+    <ThemeProvider theme={theme}>
+      {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+      <CssBaseline />
+      <Container maxWidth="lg">
+        <Grid container rowSpacing={5}>
+          <Grid item xs={12} mt={4}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Kolektivo Curaçao GeoNFT PoC
+            </Typography>
           </Grid>
-        </Container>
-      </ThemeProvider>
-    );
-  }
+          <Grid item xs={12}>
+            <Wallet />
+          </Grid>
+          <Grid item xs={12}>
+            {connected && <Map />}
+          </Grid>
+          <Grid item xs={12}>
+            <Footer />
+          </Grid>
+        </Grid>
+      </Container>
+    </ThemeProvider>
+  );
 }
 
 export default App;

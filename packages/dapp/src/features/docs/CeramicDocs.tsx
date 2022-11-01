@@ -1,12 +1,13 @@
-import React from 'react';
-import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { selectDocs, writeDocument } from '../docs/docsSlice';
-import { Grid } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
+import React from "react";
+import { useAppSelector, useAppDispatch } from "../../app/hooks";
+import { selectDocs, writeDocument } from "../docs/docsSlice";
+import { Grid } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 
 function CeramicDocs() {
   const { docs, isBusy } = useAppSelector(selectDocs);
   const dispatch = useAppDispatch();
+  console.log("DOCS: ", docs);
 
   const display = (
     <Grid container>
