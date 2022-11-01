@@ -75,6 +75,7 @@ function AddNFTForm({ open, geojson, closeForm }: NFTProps) {
         geojson: geojson,
       };
       const metaRecv = await ipfsClient.add(JSON.stringify(metadata));
+      console.log("META RECV: ", metaRecv);
 
       await dispatch(
         mint({ metadataURI: metaRecv.path, geojson: geojson })

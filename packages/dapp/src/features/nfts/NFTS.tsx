@@ -12,6 +12,7 @@ import AddNFTForm from "./AddNFTForm";
 
 function NFTS() {
   const { nfts } = useAppSelector(selectNFTs);
+  console.log("nfts in NFTs component: ", nfts);
 
   const display = (
     <Grid container>

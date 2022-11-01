@@ -230,7 +230,7 @@ export const fetchAccount = createAsyncThunk<
       address,
       balance: balance,
       status: WalletStatusEnums.CONNECTED,
-      ipfsClient,
+      ipfsClient: ipfsClient,
     };
   } catch (error) {
     console.log("Error fetching account address", error);

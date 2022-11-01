@@ -1,11 +1,11 @@
-import React from 'react';
-import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { selectWallet, connectWallet, WalletStatusEnums } from './walletSlice';
-import { Alert, AlertTitle, Grid } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import NFTS from '../nfts/NFTS';
-import CeramicDocs from '../docs/CeramicDocs';
-import { selectNFTs } from '../nfts/nftsSlice';
+import React from "react";
+import { useAppSelector, useAppDispatch } from "../../app/hooks";
+import { selectWallet, connectWallet, WalletStatusEnums } from "./walletSlice";
+import { Alert, AlertTitle, Grid } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import NFTS from "../nfts/NFTS";
+import CeramicDocs from "../docs/CeramicDocs";
+import { selectNFTs } from "../nfts/nftsSlice";
 
 function Wallet() {
   const { provider, status } = useAppSelector(selectWallet);
@@ -33,7 +33,7 @@ function Wallet() {
     display = (
       <Grid container>
         <NFTS />
-        <CeramicDocs />
+        {/* <CeramicDocs /> */}
       </Grid>
     );
   } else if (status === WalletStatusEnums.WRONG_NETWORK) {

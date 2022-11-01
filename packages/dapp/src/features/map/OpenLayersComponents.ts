@@ -15,7 +15,7 @@ const cartographicBasemap = new TileLayer({
 });
 
 const editLayerSource = new VectorSource<MultiPolygon>();
-const editLayer = new VectorLayer({
+export const editLayer = new VectorLayer({
   properties: {
     id: "edit-layer",
   },

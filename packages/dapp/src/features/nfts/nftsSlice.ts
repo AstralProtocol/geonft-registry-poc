@@ -4,14 +4,14 @@ import {
   createSlice,
   Dispatch,
   PayloadAction,
-} from '@reduxjs/toolkit';
-import { BigNumber, Contract, ethers } from 'ethers';
-import { RootState } from '../../app/store';
-import networkMapping from './../../deployments.json';
+} from "@reduxjs/toolkit";
+import { BigNumber, Contract, ethers } from "ethers";
+import { RootState } from "../../app/store";
+import networkMapping from "./../../deployments.json";
 import {
   TransactionReceipt,
   TransactionResponse,
-} from '@ethersproject/providers';
+} from "@ethersproject/providers";
 
 type AsyncThunkConfig = {
   state: RootState;
@@ -27,8 +27,8 @@ export const fetchNFTList = createAsyncThunk<
   },
   void,
   AsyncThunkConfig
->('nfts/fetchList', async (_, thunkAPI) => {
-  console.log('fetching');
+>("nfts/fetchList", async (_, thunkAPI) => {
+  console.log("fetching");
   const { provider, address, ipfsClient } = thunkAPI.getState().wallet;
 
   let geoNFTContract = null;
@@ -45,7 +45,7 @@ export const fetchNFTList = createAsyncThunk<
       networkMapping[chainIdStr as keyof typeof networkMapping];
 
     if (networkMappingForChain !== undefined) {
-      const geoNFTMapping = networkMappingForChain[0]['contracts']['GeoNFT'];
+      const geoNFTMapping = networkMappingForChain[0]["contracts"]["GeoNFT"];
 
       const signer = web3Provider.getSigner();
 
@@ -68,14 +68,14 @@ export const fetchNFTList = createAsyncThunk<
           for (let i = 0; i < tokenIds.length; i++) {
             let uri = metadataURIs[i];
 
-            if (uri.startsWith('ipfs://')) {
-              uri = uri.replace('ipfs://', '');
+            if (uri.startsWith("ipfs://")) {
+              uri = uri.replace("ipfs://", "");
             }
 
-            let result = '';
+            let result = "";
 
             for await (const chunk of ipfsClient.cat(uri)) {
-              result += Buffer.from(chunk).toString('utf-8');
+              result += Buffer.from(chunk).toString("utf-8");
             }
 
             const metadata = JSON.parse(result) as NFTMetadata;
@@ -87,21 +87,21 @@ export const fetchNFTList = createAsyncThunk<
             });
           }
         } else {
-          throw new Error('IPFS client not initialized');
+          throw new Error("IPFS client not initialized");
         }
       } catch (error) {
-        console.log('Error fetching NFT list:', error);
+        console.log("Error fetching NFT list:", error);
         throw error;
       }
     } else {
-      throw new Error('No network mapping found');
+      throw new Error("No network mapping found");
     }
   } else {
-    console.log('No web3 or provider');
-    throw new Error('No web3 or provider');
+    console.log("No web3 or provider");
+    throw new Error("No web3 or provider");
   }
 
-  console.log('nfts', nfts);
+  console.log("nfts", nfts);
   return {
     geoNFTContract,
     nfts,
@@ -112,7 +112,7 @@ export const mint = createAsyncThunk<
   { newNFT: NFT },
   { metadataURI: string; geojson: string },
   AsyncThunkConfig
->('nfts/mint', async ({ metadataURI, geojson }, thunkAPI) => {
+>("nfts/mint", async ({ metadataURI, geojson }, thunkAPI) => {
   const { provider, address, ipfsClient } = thunkAPI.getState().wallet;
   const { geoNFTContract } = thunkAPI.getState().nfts;
   const newNFT = {} as NFT;
@@ -121,12 +121,12 @@ export const mint = createAsyncThunk<
       const result = await geoNFTContract
         .safeMint(address, metadataURI, geojson)
         .then(async (tx: TransactionResponse) => {
-          console.log('mint tx hash:', tx.hash);
-          console.log('mint tx:', tx);
+          console.log("mint tx hash:", tx.hash);
+          console.log("mint tx:", tx);
           const contractReceipt: TransactionReceipt = await tx.wait();
-          console.log('transaction receipt:', contractReceipt);
+          console.log("transaction receipt:", contractReceipt);
           if (contractReceipt.status === 1) {
-            console.log('mint tx success');
+            console.log("mint tx success");
             // get nft id from receipt
             newNFT.id = BigNumber.from(
               contractReceipt.logs[0].topics[3]
@@ -135,25 +135,25 @@ export const mint = createAsyncThunk<
 
             if (ipfsClient !== null) {
               let uri = metadataURI;
-              if (uri.startsWith('ipfs://')) {
-                uri = uri.replace('ipfs://', '');
+              if (uri.startsWith("ipfs://")) {
+                uri = uri.replace("ipfs://", "");
               }
 
-              let result = '';
+              let result = "";
 
               for await (const chunk of ipfsClient.cat(uri)) {
-                result += Buffer.from(chunk).toString('utf-8');
+                result += Buffer.from(chunk).toString("utf-8");
               }
               const metadata = JSON.parse(result) as NFTMetadata;
 
               newNFT.metadata = metadata;
             } else {
-              throw new Error('IPFS client not initialized');
+              throw new Error("IPFS client not initialized");
             }
           }
         });
     } catch (error) {
-      console.log('Error minting:', error);
+      console.log("Error minting:", error);
       throw error;
     }
   }
@@ -190,7 +190,7 @@ const initialState: nftsState = {
 };
 
 export const nftsSlice = createSlice({
-  name: 'nfts',
+  name: "nfts",
   initialState,
   reducers: {
     addNft: (state, action) => {
@@ -202,13 +202,13 @@ export const nftsSlice = createSlice({
       state.isBusyFetching = true;
     });
     builder.addCase(fetchNFTList.rejected, (state, action) => {
-      console.warn('Fetch REJECTED', action);
+      console.warn("Fetch REJECTED", action);
       state.isBusyFetching = false;
     });
     builder.addCase(
       fetchNFTList.fulfilled,
       (state, action: PayloadAction<any>) => {
-        console.log('Fetch OK');
+        console.log("Fetch OK");
         state.geoNFTContract = action.payload.geoNFTContract;
         state.nfts = action.payload.nfts;
         state.isBusyFetching = false;
