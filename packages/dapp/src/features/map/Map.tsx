@@ -7,24 +7,27 @@ import VectorSource from "ol/source/Vector";
 import MultiPolygon from "ol/geom/MultiPolygon";
 import GeoJSON from "ol/format/GeoJSON";
 import { useAppSelector } from "../../app/hooks";
-import { initMap, draw } from "./OpenLayersComponents";
+import { initMap, draw, select, geoNftsLayer } from "./OpenLayersComponents";
 import { selectNFTs } from "../nfts/nftsSlice";
-import AddNFTForm from "../../features/nfts/AddNFTForm";
+import AddNFTForm, { Metadata } from "../../features/nfts/AddNFTForm";
 
 function MapWrapper() {
   const { nfts } = useAppSelector(selectNFTs);
+
+  console.log("MAP NFTS: ", nfts);
 
   const [map, setMap] = useState<Map>();
   const [drawEnabled, setDrawEnabled] = useState(false);
   const [formIsOpen, setFormIsOpen] = useState(false);
   const [geojson, setGeojson] = useState("");
+  const [metadata, setMetadata] = useState<Metadata | undefined>();
 
   const toggleDraw = () => {
     draw.setActive(!drawEnabled);
     setDrawEnabled(!drawEnabled);
   };
 
-  const openGeoNFTForm = () => {
+  const createGeoNFT = () => {
     const editLayer = getEditLayer();
 
     if (!editLayer) {
@@ -35,6 +38,23 @@ function MapWrapper() {
     const features = layerSource.getFeatures();
     const geojson = new GeoJSON().writeFeatures(features);
 
+    setMetadata(undefined);
+    setGeojson(geojson);
+    setFormIsOpen(true);
+  };
+
+  const editGeoNFT = () => {
+    const selectedFeature = select.getFeatures().getArray()[0];
+
+    if (!selectedFeature) {
+      return;
+    }
+
+    const metadata = selectedFeature.getProperties() as Metadata;
+    const geojson = new GeoJSON().writeFeature(selectedFeature);
+
+    console.log("METADATA CON SELECT: ", metadata);
+    setMetadata(metadata);
     setGeojson(geojson);
     setFormIsOpen(true);
   };
@@ -60,30 +80,26 @@ function MapWrapper() {
 
   useEffect(() => {
     initMap.setTarget("map");
-    initMap.addInteraction(draw);
 
-    setDrawEnabled(draw.getActive());
+    setDrawEnabled(false);
     setMap(initMap);
   }, []);
 
   useEffect(() => {
-    console.log("NFTS USE EFFECT: ", nfts);
     if (!nfts) return;
 
-    const editLayer = getEditLayer();
-
-    if (!editLayer) {
-      return;
-    }
-
     nfts.forEach((nft) => {
-      console.log("EACH NFT: ", nft);
-      const geojson = JSON.parse(nft.geojson);
+      const { name, description, image, geojson } = nft.metadata;
       const geojsonFeatures = new GeoJSON().readFeatures(
-        geojson
+        JSON.parse(geojson)
       ) as Feature<MultiPolygon>[];
-      console.log("geojson: ", geojson);
-      editLayer.getSource()?.addFeatures(geojsonFeatures);
+
+      geojsonFeatures[0].setProperties({
+        name,
+        description,
+        image,
+      });
+      geoNftsLayer.getSource()?.addFeatures(geojsonFeatures);
     });
   }, [nfts]);
 
@@ -98,14 +114,18 @@ function MapWrapper() {
         >
           {drawEnabled ? "Disable Draw" : "Enable Draw"}
         </Button>
-        <Button variant="contained" onClick={openGeoNFTForm}>
+        <Button variant="contained" onClick={createGeoNFT}>
           <Tooltip title="Add NFT" placement="top">
             <i className="material-icons">add</i>
           </Tooltip>
           Add GeoNFT
         </Button>
+        <Button variant="contained" onClick={editGeoNFT}>
+          Edit GeoNFT
+        </Button>
         <AddNFTForm
           open={formIsOpen}
+          metadata={metadata}
           geojson={geojson}
           closeForm={() => setFormIsOpen(false)}
         />

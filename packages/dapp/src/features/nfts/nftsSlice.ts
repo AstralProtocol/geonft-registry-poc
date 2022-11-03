@@ -101,7 +101,6 @@ export const fetchNFTList = createAsyncThunk<
     throw new Error("No web3 or provider");
   }
 
-  console.log("nfts", nfts);
   return {
     geoNFTContract,
     nfts,

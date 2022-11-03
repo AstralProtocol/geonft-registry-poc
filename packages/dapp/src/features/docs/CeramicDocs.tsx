@@ -7,7 +7,6 @@ import { LoadingButton } from "@mui/lab";
 function CeramicDocs() {
   const { docs, isBusy } = useAppSelector(selectDocs);
   const dispatch = useAppDispatch();
-  console.log("DOCS: ", docs);
 
   const display = (
     <Grid container>

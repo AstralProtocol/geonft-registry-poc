@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Alert,
@@ -8,27 +8,34 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  TextareaAutosize,
   TextField,
 } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { selectWallet } from "../wallet/walletSlice";
 import { mint, selectNFTs } from "./nftsSlice";
-// import geoJson2 from "./geojson2.json";
 import { LoadingButton } from "@mui/lab";
 
-function AddNFTForm({ open, geojson, closeForm }: NFTProps) {
+function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
   const dispatch = useAppDispatch();
 
   const { ipfsClient } = useAppSelector(selectWallet);
   const { isBusyMinting } = useAppSelector(selectNFTs);
 
   const [error, setError] = useState("");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [fileUrl, setFileUrl] = useState("");
+  const [name, setName] = useState(metadata?.name || "");
+  const [description, setDescription] = useState(metadata?.description || "");
+  const [fileUrl, setFileUrl] = useState(metadata?.image || "");
 
+  useEffect(() => {
+    if (metadata) {
+      setName(metadata.name);
+      setDescription(metadata.description);
+      setFileUrl(metadata.image);
+    }
+  }, [metadata]);
+
+  console.log(name);
   const onNameChanged = (e: {
     target: { value: React.SetStateAction<string> };
   }) => setName(e.target.value);
@@ -45,7 +52,6 @@ function AddNFTForm({ open, geojson, closeForm }: NFTProps) {
       const added = await ipfsClient.add(file, {
         progress: (prog: any) => console.log(`received: ${prog}`),
       });
-      console.log(added);
       console.log(added.path);
       const url = `ipfs://${added.path}`;
       setFileUrl(url);
@@ -68,18 +74,22 @@ function AddNFTForm({ open, geojson, closeForm }: NFTProps) {
     }
 
     try {
-      const metadata = {
-        name: name,
-        description: description,
+      const newMetadata = {
+        name,
+        description,
         image: fileUrl,
-        geojson: geojson,
       };
-      const metaRecv = await ipfsClient.add(JSON.stringify(metadata));
-      console.log("META RECV: ", metaRecv);
 
-      await dispatch(
-        mint({ metadataURI: metaRecv.path, geojson: geojson })
-      ).unwrap();
+      if (metadata) {
+        // Update existing NFT
+      } else {
+        const metaRecv = await ipfsClient.add(JSON.stringify(newMetadata));
+
+        await dispatch(
+          mint({ metadataURI: metaRecv.path, geojson: geojson })
+        ).unwrap();
+      }
+
       setName("");
       setDescription("");
       setFileUrl("");
@@ -181,8 +191,15 @@ function AddNFTForm({ open, geojson, closeForm }: NFTProps) {
   );
 }
 
+export interface Metadata {
+  name: string;
+  description: string;
+  image: string;
+}
+
 interface NFTProps {
   open: boolean;
+  metadata: Metadata | undefined;
   geojson?: string;
   closeForm: () => void;
 }

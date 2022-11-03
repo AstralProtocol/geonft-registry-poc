@@ -31,7 +31,6 @@ function Footer() {
   const { ceramic } = useAppSelector(selectDocs);
   const dispatch = useAppDispatch();
 
-  console.log("DOCS APP: ", docs);
   useEffect(() => {
     if (status === WalletStatusEnums.CONNECTED) {
       dispatch(readDocument());

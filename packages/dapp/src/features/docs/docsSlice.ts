@@ -147,8 +147,6 @@ export const readDocument = createAsyncThunk<
         docContent: readStream.content,
       };
 
-      console.log("DOC READER: ", doc);
-
       return {
         doc: doc,
         ceramic: ceramic,
