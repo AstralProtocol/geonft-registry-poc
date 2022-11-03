@@ -1,63 +1,30 @@
-import React from "react";
-import { useAppSelector, useAppDispatch } from "../../app/hooks";
-import { selectWallet, connectWallet, WalletStatusEnums } from "./walletSlice";
-import { Alert, AlertTitle, Grid } from "@mui/material";
+import { Box } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import NFTS from "../nfts/NFTS";
-import CeramicDocs from "../docs/CeramicDocs";
-import { selectNFTs } from "../nfts/nftsSlice";
+import { walletStore, WalletStatusEnums } from "./walletStore";
 
-function Wallet() {
-  const { provider, status } = useAppSelector(selectWallet);
-  const { isBusyFetching } = useAppSelector(selectNFTs);
+const Wallet = () => {
+  const connected = walletStore.status === WalletStatusEnums.CONNECTED;
 
-  const dispatch = useAppDispatch();
+  const connectWallet = () => walletStore.connectWallet();
+  const disconnectWallet = () => walletStore.disconnectWallet();
 
-  let display;
-
-  if (provider == null) {
-    display = (
-      <div>
-        <LoadingButton
-          loading={status == WalletStatusEnums.LOADING || isBusyFetching}
-          variant="contained"
-          onClick={() => dispatch(connectWallet())}
-        >
-          Connect
-        </LoadingButton>
-      </div>
-    );
-  }
-
-  if (status === WalletStatusEnums.CONNECTED) {
-    display = (
-      <Grid container>
-        <NFTS />
-        {/* <CeramicDocs /> */}
-      </Grid>
-    );
-  } else if (status === WalletStatusEnums.WRONG_NETWORK) {
-    display = (
-      <Grid container>
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          Contract not deployed to this network (chainId {provider.chainId})
-          <br />
-          <br />
-          Please switch to either:
-          <ol>
-            <li>
-              localhost with chainId: 31337 (make sure the hardhat node is
-              running)
-            </li>
-            <li>the Alfajores network</li>
-          </ol>
-        </Alert>
-      </Grid>
-    );
-  }
-
-  return <div>{display}</div>;
-}
+  return (
+    <Box>
+      <LoadingButton
+        variant="contained"
+        loading={walletStore.status === WalletStatusEnums.LOADING}
+        onClick={connected ? disconnectWallet : connectWallet}
+      >
+        {connected ? "Disconnect" : "Connect"} Wallet
+      </LoadingButton>
+      {connected && (
+        <Box>
+          <p>Address: {walletStore.address}</p>
+          <p>Balance: {walletStore.balance} ETH</p>
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 export default Wallet;
