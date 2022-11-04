@@ -77,6 +77,7 @@ import Map from "./features/map/Map";
 
 const App = observer(() => {
   const connected = walletStore.status === WalletStatusEnums.CONNECTED;
+  console.log("CONECTED: ", connected);
 
   return (
     <ThemeProvider theme={theme}>

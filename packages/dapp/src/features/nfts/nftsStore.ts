@@ -63,9 +63,10 @@ class NFTsStore {
             metadata: metadata,
             geojson: geojsons[i],
           });
-          console.log("NFTS: ", nfts);
-          this.nfts = nfts;
         }
+
+        console.log("NFTS: ", nfts);
+        this.nfts = nfts;
       } catch (error) {
         console.log("Error fetching NFT list:", error);
         throw error;

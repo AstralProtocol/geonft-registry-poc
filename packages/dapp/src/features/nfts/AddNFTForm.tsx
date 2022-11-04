@@ -30,7 +30,6 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
     }
   }, [metadata]);
 
-  console.log(name);
   const onNameChanged = (e: {
     target: { value: React.SetStateAction<string> };
   }) => setName(e.target.value);

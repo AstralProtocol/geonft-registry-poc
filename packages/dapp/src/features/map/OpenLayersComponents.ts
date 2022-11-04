@@ -6,7 +6,7 @@ import VectorSource from "ol/source/Vector";
 import OSM from "ol/source/OSM";
 import { Select, Draw, Modify } from "ol/interaction";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style";
-import { MultiPolygon } from "ol/geom";
+import { Polygon, MultiPolygon } from "ol/geom";
 import { fromLonLat } from "ol/proj";
 import { singleClick } from "ol/events/condition";
 
@@ -31,7 +31,7 @@ export const geoNftsLayer = new VectorLayer({
   }),
 });
 
-const editLayerSource = new VectorSource<MultiPolygon>();
+const editLayerSource = new VectorSource<Polygon>();
 export const editLayer = new VectorLayer({
   properties: {
     id: "edit-layer",
@@ -64,7 +64,7 @@ export const select = new Select({
 
 export const draw = new Draw({
   source: editLayerSource,
-  type: "MultiPolygon",
+  type: "Polygon",
   trace: true,
   stopClick: true,
 });
@@ -90,6 +90,8 @@ export const modify = new Modify({
     return singleClick(event) && event.originalEvent.ctrlKey;
   },
 });
+
+modify.setActive(false);
 
 // Setup map
 export const initMap = new Map({

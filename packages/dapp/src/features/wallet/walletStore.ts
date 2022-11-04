@@ -68,10 +68,10 @@ class WalletStore {
 
       this.address = address;
       this.balance = ethers.utils.formatEther(balance);
-      this.status = WalletStatusEnums.CONNECTED;
       this.web3Provider = web3Provider;
       this.web3Modal = web3Modal;
       this.ipfsClient = create(ipfsOptions);
+      this.status = WalletStatusEnums.CONNECTED;
 
       console.log("Connected to wallet");
     } catch (error) {
