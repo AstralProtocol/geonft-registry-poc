@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+import { observer } from "mobx-react-lite";
 import {
   Alert,
   Button,
@@ -15,13 +15,16 @@ import { walletStore } from "../wallet/walletStore";
 import { docsStore } from "../docs/docsStore";
 import { nftsStore } from "./nftsStore";
 
-function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
+const AddNFTForm = observer((props: NFTProps) => {
+  const { open, metadata, geojson, closeForm } = props;
+
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
   const [description, setDescription] = useState(metadata?.description || "");
   const [fileUrl, setFileUrl] = useState(metadata?.image || "");
 
   const { ipfsClient } = walletStore;
+  const { isBusyMinting } = nftsStore;
 
   useEffect(() => {
     if (metadata) {
@@ -78,8 +81,10 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
       if (metadata) {
         // Update existing NFT
       } else {
+        nftsStore.isBusyMinting = true;
         const metadataURI = await docsStore.writeDocument(newMetadata);
         await nftsStore.mint({ metadataURI, geojson });
+        nftsStore.isBusyMinting = false;
       }
 
       setName("");
@@ -167,8 +172,7 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
             </Grid>
             <Grid item>
               <LoadingButton
-                // loading={isBusyMinting}
-                loading={false}
+                loading={isBusyMinting}
                 variant="contained"
                 color="primary"
                 fullWidth
@@ -182,7 +186,7 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
       </Dialog>
     </div>
   );
-}
+});
 
 export interface Metadata {
   name: string;
