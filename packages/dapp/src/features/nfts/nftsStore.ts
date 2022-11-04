@@ -176,7 +176,6 @@ export interface NFTMetadata {
   name: string;
   description: string;
   image: string;
-  geojson: string;
 }
 
 export interface NFT {

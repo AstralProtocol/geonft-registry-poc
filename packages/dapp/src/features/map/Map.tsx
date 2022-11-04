@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { toJS } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Button, Box, Tooltip } from "@mui/material";
 import Map from "ol/Map";
@@ -93,24 +92,6 @@ const MapWrapper = observer(() => {
 
     return layer;
   };
-
-  // const onSubmit = () => {
-  //   const editLayer = getEditLayer();
-  //   const editLayerFeatures = editLayer.getSource()?.getFeatures();
-
-  //   if (!editLayerFeatures) {
-  //     return;
-  //   }
-
-  //   const layerSource = editLayer.getSource() as VectorSource<MultiPolygon>;
-  //   const features = layerSource.getFeatures();
-  //   const geojson = new GeoJSON().writeFeatures(features);
-
-  //   console.log("METADATA: ", metadata);
-  //   console.log("GEOJSON: ", geojson);
-
-  //   setFormIsOpen(false);
-  // };
 
   useEffect(() => {
     initMap.setTarget("map");
