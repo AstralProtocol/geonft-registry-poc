@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { observer } from "mobx-react-lite";
 import { Button, Box, Tooltip } from "@mui/material";
 import Map from "ol/Map";
 import Feature from "ol/Feature";
@@ -6,13 +7,12 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import MultiPolygon from "ol/geom/MultiPolygon";
 import GeoJSON from "ol/format/GeoJSON";
-import { useAppSelector } from "../../app/hooks";
 import { initMap, draw, select, geoNftsLayer } from "./OpenLayersComponents";
-import { selectNFTs } from "../nfts/nftsSlice";
 import AddNFTForm, { Metadata } from "../../features/nfts/AddNFTForm";
+import { nftsStore } from "../../features/nfts/nftsStore";
 
-function MapWrapper() {
-  const { nfts } = useAppSelector(selectNFTs);
+const MapWrapper = observer(() => {
+  const { nfts } = nftsStore;
 
   console.log("MAP NFTS: ", nfts);
 
@@ -29,13 +29,9 @@ function MapWrapper() {
 
   const createGeoNFT = () => {
     const editLayer = getEditLayer();
-
-    if (!editLayer) {
-      throw new Error("Edit layer does not exists");
-    }
-
-    const layerSource = editLayer.getSource() as VectorSource<MultiPolygon>;
-    const features = layerSource.getFeatures();
+    const features = editLayer
+      .getSource()
+      ?.getFeatures() as Feature<MultiPolygon>[];
     const geojson = new GeoJSON().writeFeatures(features);
 
     setMetadata(undefined);
@@ -53,19 +49,14 @@ function MapWrapper() {
     const metadata = selectedFeature.getProperties() as Metadata;
     const geojson = new GeoJSON().writeFeature(selectedFeature);
 
-    console.log("METADATA CON SELECT: ", metadata);
     setMetadata(metadata);
     setGeojson(geojson);
     setFormIsOpen(true);
   };
 
-  const getEditLayer = ():
-    | VectorLayer<VectorSource<MultiPolygon>>
-    | undefined => {
+  const getEditLayer = (): VectorLayer<VectorSource<MultiPolygon>> => {
     if (!map) {
-      // throw new Error("Map is not initialized");
-      console.error("Map is not initialized");
-      return;
+      throw new Error("Map is not initialized");
     }
 
     const layer = map
@@ -75,7 +66,29 @@ function MapWrapper() {
         return layer.getProperties().id === "edit-layer";
       }) as unknown as VectorLayer<VectorSource<MultiPolygon>>;
 
+    if (!layer) {
+      throw new Error("Edit layer does not exists");
+    }
+
     return layer;
+  };
+
+  const onSubmit = () => {
+    const editLayer = getEditLayer();
+    const editLayerFeatures = editLayer.getSource()?.getFeatures();
+
+    if (!editLayerFeatures) {
+      return;
+    }
+
+    const layerSource = editLayer.getSource() as VectorSource<MultiPolygon>;
+    const features = layerSource.getFeatures();
+    const geojson = new GeoJSON().writeFeatures(features);
+
+    console.log("METADATA: ", metadata);
+    console.log("GEOJSON: ", geojson);
+
+    setFormIsOpen(false);
   };
 
   useEffect(() => {
@@ -89,16 +102,12 @@ function MapWrapper() {
     if (!nfts) return;
 
     nfts.forEach((nft) => {
-      const { name, description, image, geojson } = nft.metadata;
+      const { geojson, metadata } = nft;
       const geojsonFeatures = new GeoJSON().readFeatures(
         JSON.parse(geojson)
       ) as Feature<MultiPolygon>[];
 
-      geojsonFeatures[0].setProperties({
-        name,
-        description,
-        image,
-      });
+      geojsonFeatures[0].setProperties(metadata);
       geoNftsLayer.getSource()?.addFeatures(geojsonFeatures);
     });
   }, [nfts]);
@@ -132,6 +141,6 @@ function MapWrapper() {
       </Box>
     </div>
   );
-}
+});
 
 export default MapWrapper;
