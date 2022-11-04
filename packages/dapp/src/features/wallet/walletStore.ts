@@ -2,7 +2,7 @@ import { makeAutoObservable } from "mobx";
 import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import { create, IPFSHTTPClient } from "ipfs-http-client";
+// import { create, IPFSHTTPClient } from "ipfs-http-client";
 
 class WalletStore {
   address: string | null = null;

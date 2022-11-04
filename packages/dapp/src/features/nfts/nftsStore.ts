@@ -20,6 +20,7 @@ class NFTsStore {
 
   fetchNFTs = async (): Promise<void> => {
     console.log("fetching");
+    this.isBusyFetching = true;
 
     try {
       const { provider, address, ipfsClient } = walletStore;
@@ -67,6 +68,8 @@ class NFTsStore {
     } catch (error) {
       console.error(error);
     }
+
+    this.isBusyFetching = false;
   };
 
   mint = async ({

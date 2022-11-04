@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { Button, Box, Tooltip } from "@mui/material";
+import {
+  Button,
+  Box,
+  Tooltip,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import Map from "ol/Map";
 import Feature from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
@@ -11,8 +17,9 @@ import { initMap, draw, select, geoNftsLayer } from "./OpenLayersComponents";
 import AddNFTForm, { Metadata } from "../../features/nfts/AddNFTForm";
 import { nftsStore } from "../../features/nfts/nftsStore";
 
-const MapWrapper = observer(() => {
+const MapWrapper = observer((): JSX.Element => {
   const { nfts } = nftsStore;
+  console.log("IS BUSY FETCHING: ", nftsStore.isBusyFetching);
 
   console.log("RENDERING MAP");
 
@@ -116,7 +123,9 @@ const MapWrapper = observer(() => {
 
   return (
     <div>
-      <Box id="map" width="100%" height="400px"></Box>
+      <Box id="map" width="100%" height="400px" position="relative">
+        {nftsStore.isBusyFetching && <NFTsLoaderDisplay />}
+      </Box>
       <Box mt={2} display="flex" flexDirection="row" gap={2}>
         <Button
           variant="contained"
@@ -144,5 +153,28 @@ const MapWrapper = observer(() => {
     </div>
   );
 });
+
+const NFTsLoaderDisplay = (): JSX.Element => (
+  <Box
+    width="100%"
+    height="100%"
+    position="absolute"
+    top={0}
+    left={0}
+    display="flex"
+    flexDirection="column"
+    justifyContent="center"
+    alignItems="center"
+    bgcolor="rgba(0, 0, 0, 0.5)"
+    zIndex={9999}
+  >
+    <Typography variant="h5" color="white">
+      Fetching NFTs...
+    </Typography>
+    <Box mt={2} color="white">
+      <CircularProgress color="inherit" />
+    </Box>
+  </Box>
+);
 
 export default MapWrapper;
