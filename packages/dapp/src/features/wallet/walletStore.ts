@@ -2,18 +2,21 @@ import { makeAutoObservable } from "mobx";
 import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import { create, IPFSHTTPClient } from "ipfs-http-client";
 
 class WalletStore {
   address: string | null = null;
   balance: string | null = null;
   status: WalletStatusEnums = WalletStatusEnums.DISCONNECTED;
-  web3Modal: Web3Modal | null = null;
+  ipfsClient: IPFSHTTPClient | null = null;
+  web3Provider: ethers.providers.Web3Provider | null = null;
+  private web3Modal: Web3Modal | null = null;
 
   constructor() {
     makeAutoObservable(this);
   }
 
-  connectWallet = async () => {
+  connectWallet = async (): Promise<void> => {
     console.log("Connecting wallet");
     this.status = WalletStatusEnums.LOADING;
 
@@ -66,7 +69,9 @@ class WalletStore {
       this.address = address;
       this.balance = ethers.utils.formatEther(balance);
       this.status = WalletStatusEnums.CONNECTED;
+      this.web3Provider = web3Provider;
       this.web3Modal = web3Modal;
+      this.ipfsClient = create(ipfsOptions);
 
       console.log("Connected to wallet");
     } catch (error) {
@@ -76,7 +81,7 @@ class WalletStore {
     }
   };
 
-  disconnectWallet = async () => {
+  disconnectWallet = async (): Promise<void> => {
     console.log("Disconnecting wallet");
     this.status = WalletStatusEnums.LOADING;
 
@@ -89,6 +94,22 @@ class WalletStore {
     }
   };
 }
+
+const ipfsOptions = {
+  host: "ipfs.infura.io",
+  port: 5001,
+  protocol: "https",
+  apiPath: "/api/v0",
+  headers: {
+    authorization:
+      "Basic " +
+      Buffer.from(
+        process.env.REACT_APP_PROJECT_ID +
+          ":" +
+          process.env.REACT_APP_PROJECT_SECRET
+      ).toString("base64"),
+  },
+};
 
 export enum WalletStatusEnums {
   DISCONNECTED,

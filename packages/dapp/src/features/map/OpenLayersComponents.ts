@@ -36,7 +36,7 @@ export const editLayer = new VectorLayer({
   properties: {
     id: "edit-layer",
   },
-  source: new VectorSource<MultiPolygon>(),
+  source: editLayerSource,
   style: new Style({
     fill: new Fill({
       color: [0, 153, 255, 0.3],

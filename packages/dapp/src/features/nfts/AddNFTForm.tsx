@@ -10,22 +10,17 @@ import {
   Grid,
   TextField,
 } from "@mui/material";
-
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { selectWallet } from "../wallet/walletSlice";
-import { mint, selectNFTs } from "./nftsSlice";
 import { LoadingButton } from "@mui/lab";
+import { walletStore } from "../wallet/walletStore";
+import { nftsStore } from "./nftsStore";
 
 function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
-  const dispatch = useAppDispatch();
-
-  const { ipfsClient } = useAppSelector(selectWallet);
-  const { isBusyMinting } = useAppSelector(selectNFTs);
-
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
   const [description, setDescription] = useState(metadata?.description || "");
   const [fileUrl, setFileUrl] = useState(metadata?.image || "");
+
+  const { ipfsClient } = walletStore;
 
   useEffect(() => {
     if (metadata) {
@@ -85,9 +80,7 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
       } else {
         const metaRecv = await ipfsClient.add(JSON.stringify(newMetadata));
 
-        await dispatch(
-          mint({ metadataURI: metaRecv.path, geojson: geojson })
-        ).unwrap();
+        await nftsStore.mint({ metadataURI: metaRecv.path, geojson: geojson });
       }
 
       setName("");
@@ -175,7 +168,8 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
             </Grid>
             <Grid item>
               <LoadingButton
-                loading={isBusyMinting}
+                // loading={isBusyMinting}
+                loading={false}
                 variant="contained"
                 color="primary"
                 fullWidth

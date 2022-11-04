@@ -1,19 +1,11 @@
-import React, { useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { ethers } from "ethers";
 import { ThemeProvider } from "@mui/material/styles";
-import {
-  Button,
-  Container,
-  CssBaseline,
-  Box,
-  Grid,
-  Typography,
-} from "@mui/material";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { Container, CssBaseline, Box, Grid, Typography } from "@mui/material";
+// import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import theme from "./theme";
 import Wallet from "./features/wallet/Wallet";
 import { walletStore, WalletStatusEnums } from "./features/wallet/walletStore";
+import { NFTsList } from "./features/nfts/NFTsList";
 import Map from "./features/map/Map";
 
 // function Footer() {
@@ -102,16 +94,14 @@ const App = observer(() => {
           </Grid>
           <Grid item xs={12}>
             {connected && (
-              <Grid container>
-                <Grid item xs={9}>
+              <Box display="flex" gap={4}>
+                <Box flexGrow={1}>
                   <Map />
-                </Grid>
-                <Grid item xs={3}>
-                  <Box bgcolor="pink" p={2}>
-                    HOLA
-                  </Box>
-                </Grid>
-              </Grid>
+                </Box>
+                <Box width="400px">
+                  <NFTsList />
+                </Box>
+              </Box>
             )}
             {!connected && (
               <Typography
