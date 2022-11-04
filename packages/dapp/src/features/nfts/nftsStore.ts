@@ -6,10 +6,13 @@ import {
 } from "@ethersproject/providers";
 import { walletStore } from "../wallet/walletStore";
 import networkMapping from "./../../deployments.json";
+import { docsStore } from "../docs/docsStore";
 
 class NFTsStore {
   nfts: NFT[] = [];
   geoNFTContract: Contract | null = null;
+  isBusyMinting = false;
+  isBusyFetching = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -19,7 +22,8 @@ class NFTsStore {
     console.log("fetching");
 
     try {
-      const { web3Provider, address, ipfsClient } = walletStore;
+      const { provider, address, ipfsClient } = walletStore;
+      const web3Provider = new ethers.providers.Web3Provider(provider);
       const nfts: NFT[] = [];
 
       if (!web3Provider || !address || !ipfsClient) {
@@ -27,7 +31,7 @@ class NFTsStore {
       }
 
       if (!this.geoNFTContract) {
-        this.geoNFTContract = await getGeoNFTContract(web3Provider);
+        this.geoNFTContract = await this.getGeoNFTContract(web3Provider);
       }
 
       // Get a list of NFTs owned by the user
@@ -44,19 +48,8 @@ class NFTsStore {
 
         // For each tokenId, push to the list of NFTs
         for (let i = 0; i < tokenIds.length; i++) {
-          let uri = metadataURIs[i];
-
-          if (uri.startsWith("ipfs://")) {
-            uri = uri.replace("ipfs://", "");
-          }
-
-          let result = "";
-
-          for await (const chunk of ipfsClient.cat(uri)) {
-            result += Buffer.from(chunk).toString("utf-8");
-          }
-
-          const metadata = JSON.parse(result) as NFTMetadata;
+          const metadataURI = metadataURIs[i];
+          const metadata = await docsStore.readDocument(metadataURI);
 
           nfts.push({
             id: BigNumber.from(tokenIds[i]).toNumber(),
@@ -121,18 +114,7 @@ class NFTsStore {
             ).toNumber();
             newNFT.geojson = geojson;
 
-            let uri = metadataURI;
-            if (uri.startsWith("ipfs://")) {
-              uri = uri.replace("ipfs://", "");
-            }
-
-            let result = "";
-
-            for await (const chunk of ipfsClient.cat(uri)) {
-              result += Buffer.from(chunk).toString("utf-8");
-            }
-            const metadata = JSON.parse(result) as NFTMetadata;
-
+            const metadata = await docsStore.readDocument(metadataURI);
             newNFT.metadata = metadata;
 
             this.nfts.push(newNFT);
@@ -145,32 +127,32 @@ class NFTsStore {
       console.error(error);
     }
   };
+
+  private getGeoNFTContract = async (
+    provider: ethers.providers.Web3Provider
+  ): Promise<Contract> => {
+    const signer = provider.getSigner();
+    const chainId: number = await (await provider.getNetwork()).chainId;
+    const chainIdStr: string = chainId.toString();
+    console.log(`Connected on chain ${chainId}`);
+
+    const networkMappingForChain =
+      networkMapping[chainIdStr as keyof typeof networkMapping];
+
+    if (networkMappingForChain === undefined) {
+      throw new Error("No network mapping found");
+    }
+
+    const geoNFTMapping = networkMappingForChain[0]["contracts"]["GeoNFT"];
+    const geoNFTContract = new Contract(
+      geoNFTMapping.address,
+      geoNFTMapping.abi,
+      signer
+    );
+
+    return geoNFTContract;
+  };
 }
-
-const getGeoNFTContract = async (
-  provider: ethers.providers.Web3Provider
-): Promise<Contract> => {
-  const signer = provider.getSigner();
-  const chainId: number = await (await provider.getNetwork()).chainId;
-  const chainIdStr: string = chainId.toString();
-  console.log(`Connected on chain ${chainId}`);
-
-  const networkMappingForChain =
-    networkMapping[chainIdStr as keyof typeof networkMapping];
-
-  if (networkMappingForChain === undefined) {
-    throw new Error("No network mapping found");
-  }
-
-  const geoNFTMapping = networkMappingForChain[0]["contracts"]["GeoNFT"];
-  const geoNFTContract = new Contract(
-    geoNFTMapping.address,
-    geoNFTMapping.abi,
-    signer
-  );
-
-  return geoNFTContract;
-};
 
 export interface NFTMetadata {
   name: string;

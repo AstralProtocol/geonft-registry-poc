@@ -8,8 +8,9 @@ class WalletStore {
   address: string | null = null;
   balance: string | null = null;
   status: WalletStatusEnums = WalletStatusEnums.DISCONNECTED;
-  ipfsClient: IPFSHTTPClient | null = null;
-  web3Provider: ethers.providers.Web3Provider | null = null;
+  // ipfsClient: IPFSHTTPClient | null = null;
+  ipfsClient = true; // Mock ipfsClient for now. It will only be used on image storage
+  provider: any | null = null;
   private web3Modal: Web3Modal | null = null;
 
   constructor() {
@@ -68,9 +69,9 @@ class WalletStore {
 
       this.address = address;
       this.balance = ethers.utils.formatEther(balance);
-      this.web3Provider = web3Provider;
+      this.provider = provider;
       this.web3Modal = web3Modal;
-      this.ipfsClient = create(ipfsOptions);
+      // this.ipfsClient = create(ipfsOptions);
       this.status = WalletStatusEnums.CONNECTED;
 
       console.log("Connected to wallet");
@@ -89,8 +90,9 @@ class WalletStore {
       await this.web3Modal.clearCachedProvider();
       this.address = null;
       this.balance = null;
-      this.status = WalletStatusEnums.DISCONNECTED;
+      this.provider = null;
       this.web3Modal = null;
+      this.status = WalletStatusEnums.DISCONNECTED;
     }
   };
 }

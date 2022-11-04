@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { walletStore } from "../wallet/walletStore";
+import { docsStore } from "../docs/docsStore";
 import { nftsStore } from "./nftsStore";
 
 function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
@@ -42,16 +43,16 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
     if (ipfsClient == null) {
       throw new Error("IPFS client is not initialized");
     }
-    try {
-      const added = await ipfsClient.add(file, {
-        progress: (prog: any) => console.log(`received: ${prog}`),
-      });
-      console.log(added.path);
-      const url = `ipfs://${added.path}`;
-      setFileUrl(url);
-    } catch (error) {
-      console.log("Error uploading file: ", error);
-    }
+    // try {
+    //   const added = await ipfsClient.add(file, {
+    //     progress: (prog: any) => console.log(`received: ${prog}`),
+    //   });
+    //   console.log(added.path);
+    //   const url = `ipfs://${added.path}`;
+    //   setFileUrl(url);
+    // } catch (error) {
+    //   console.log("Error uploading file: ", error);
+    // }
   };
 
   const handleClose = () => {
@@ -77,9 +78,8 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
       if (metadata) {
         // Update existing NFT
       } else {
-        const metaRecv = await ipfsClient.add(JSON.stringify(newMetadata));
-
-        await nftsStore.mint({ metadataURI: metaRecv.path, geojson: geojson });
+        const metadataURI = await docsStore.writeDocument(newMetadata);
+        await nftsStore.mint({ metadataURI, geojson });
       }
 
       setName("");
