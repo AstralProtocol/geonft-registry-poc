@@ -60,6 +60,7 @@ const AddNFTForm = observer((props: NFTProps) => {
 
   const handleClose = () => {
     closeForm();
+    nftsStore.editNft = null;
   };
 
   const handleSubmit = async () => {
@@ -78,14 +79,23 @@ const AddNFTForm = observer((props: NFTProps) => {
         image: fileUrl,
       };
 
+      nftsStore.isBusyMinting = true;
+
       if (metadata) {
-        // Update existing NFT
+        const nftId = nftsStore.editNft?.id;
+
+        if (!nftId && nftId !== 0) {
+          handleClose();
+          throw new Error("NFT ID is not defined");
+        }
+
+        await nftsStore.updateNftMetadata(nftId, newMetadata);
       } else {
-        nftsStore.isBusyMinting = true;
         const metadataURI = await docsStore.writeDocument(newMetadata);
         await nftsStore.mint({ metadataURI, geojson });
-        nftsStore.isBusyMinting = false;
       }
+
+      nftsStore.isBusyMinting = false;
 
       setName("");
       setDescription("");

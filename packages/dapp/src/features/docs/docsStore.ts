@@ -9,6 +9,7 @@ import { NFTMetadata } from "../nfts/nftsStore";
 
 class DocsStore {
   ceramic: CeramicClient | null = null;
+  nftDocuments: Record<number, string> = {};
 
   constructor() {
     makeAutoObservable(this);
@@ -50,6 +51,29 @@ class DocsStore {
       return doc.id.toString();
     } catch (error) {
       console.log("Error writing document", error);
+      throw error;
+    }
+  };
+
+  updateDocument = async (
+    nftId: number,
+    metadata: NFTMetadata
+  ): Promise<void> => {
+    try {
+      const documentId = this.nftDocuments[nftId];
+
+      if (!documentId) {
+        throw new Error("Document not found");
+      }
+
+      if (!this.ceramic) {
+        this.ceramic = await this.createCeramicClient();
+      }
+
+      const document = await TileDocument.load(this.ceramic, documentId);
+      await document.update(metadata);
+    } catch (error) {
+      console.log("Error updating document", error);
       throw error;
     }
   };

@@ -19,9 +19,6 @@ import { nftsStore } from "../../features/nfts/nftsStore";
 
 const MapWrapper = observer((): JSX.Element => {
   const { nfts } = nftsStore;
-  console.log("IS BUSY FETCHING: ", nftsStore.isBusyFetching);
-
-  console.log("RENDERING MAP");
 
   const [map, setMap] = useState<Map>();
   const [drawEnabled, setDrawEnabled] = useState(false);
@@ -51,6 +48,41 @@ const MapWrapper = observer((): JSX.Element => {
     setFormIsOpen(true);
   };
 
+  const editGeoNFT = () => {
+    const { editNft } = nftsStore;
+
+    if (!editNft) {
+      return;
+    }
+
+    setMetadata(editNft.metadata);
+    setGeojson(editNft.geojson);
+    setFormIsOpen(true);
+  };
+
+  const setSelectedFeatureAsEditNft = () => {
+    const selectedFeature = select.getFeatures().getArray()[0];
+
+    if (!selectedFeature) {
+      return;
+    }
+
+    console.log("SELECTED FEATURE", selectedFeature);
+    const nftId = selectedFeature.getId() as number;
+    console.log("SELECTED NFT ID", nftId);
+    if (!nftId && nftId !== 0) {
+      throw new Error("NFT ID is not defined");
+    }
+
+    const editNft = nfts.find((nft) => nft.id === nftId);
+
+    if (!editNft) {
+      throw new Error("NFT not found");
+    }
+
+    nftsStore.editNft = editNft;
+  };
+
   const convertPolygonFeaturesToMultiPolygonFeature = (
     features: Feature<Polygon>[]
   ): Feature<MultiPolygon> => {
@@ -64,21 +96,6 @@ const MapWrapper = observer((): JSX.Element => {
     });
 
     return multiPolygonFeature;
-  };
-
-  const editGeoNFT = () => {
-    const selectedFeature = select.getFeatures().getArray()[0];
-
-    if (!selectedFeature) {
-      return;
-    }
-
-    const metadata = selectedFeature.getProperties() as Metadata;
-    const geojson = new GeoJSON().writeFeature(selectedFeature);
-
-    setMetadata(metadata);
-    setGeojson(geojson);
-    setFormIsOpen(true);
   };
 
   const getEditLayer = (): VectorLayer<VectorSource<Polygon>> => {
@@ -116,10 +133,16 @@ const MapWrapper = observer((): JSX.Element => {
         JSON.parse(geojson)
       ) as Feature<MultiPolygon>[];
 
-      geojsonFeatures[0].setProperties(metadata);
-      geoNftsLayer.getSource()?.addFeatures(geojsonFeatures);
+      const feature = geojsonFeatures[0];
+      feature.setId(nft.id);
+      feature.setProperties(metadata);
+      geoNftsLayer.getSource()?.addFeatures([feature]);
     });
   }, [nfts]);
+
+  useEffect(() => {
+    editGeoNFT();
+  }, [nftsStore.editNft]);
 
   return (
     <div>
@@ -140,7 +163,7 @@ const MapWrapper = observer((): JSX.Element => {
           </Tooltip>
           Add GeoNFT
         </Button>
-        <Button variant="contained" onClick={editGeoNFT}>
+        <Button variant="contained" onClick={setSelectedFeatureAsEditNft}>
           Edit GeoNFT
         </Button>
         <AddNFTForm

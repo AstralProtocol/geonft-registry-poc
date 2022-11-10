@@ -2,6 +2,7 @@ import { observer } from "mobx-react-lite";
 import { Box } from "@mui/system";
 import {
   Typography,
+  Button,
   List,
   ListItem,
   ListItemText,
@@ -17,7 +18,20 @@ export const NFTsList = observer((): JSX.Element => {
       return <NFTsLoaderDisplay />;
     }
 
-    return nfts.length === 0 ? <NoNFTsFound /> : <NFTs nfts={nfts} />;
+    return nfts.length === 0 ? (
+      <NoNFTsFound />
+    ) : (
+      <NFTs nfts={nfts} editMetadata={editMetadata} />
+    );
+  };
+
+  const editMetadata = (nftId: number) => {
+    console.log("EDITING NFT ", nftId);
+    const editNft = nfts.find((nft) => nft.id === nftId);
+
+    if (editNft) {
+      nftsStore.editNft = editNft;
+    }
   };
 
   return (
@@ -30,15 +44,23 @@ export const NFTsList = observer((): JSX.Element => {
   );
 });
 
-const NFTs = ({ nfts }: NFTsProps): JSX.Element => (
+const NFTs = ({ nfts, editMetadata }: NFTsProps): JSX.Element => (
   <List>
     {nfts.map((nft) => (
       <ListItem key={nft.id} style={{ paddingLeft: 0 }} divider>
-        <Box mr={4}>ID: {nft.id}</Box>
         <ListItemText
           primary={nft.metadata.name || "Not defined"}
-          secondary={nft.metadata.description || "Not defined"}
+          secondary={
+            <>
+              ID: {nft.id}
+              <br />
+              {nft.metadata.description || "Not defined"}
+            </>
+          }
         />
+        <Button variant="contained" onClick={() => editMetadata(nft.id)}>
+          Edit metadata
+        </Button>
       </ListItem>
     ))}
   </List>
@@ -46,6 +68,7 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => (
 
 interface NFTsProps {
   nfts: NFT[];
+  editMetadata: (nftId: number) => void;
 }
 
 const NFTsLoaderDisplay = (): JSX.Element => (

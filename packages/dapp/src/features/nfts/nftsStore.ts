@@ -11,6 +11,7 @@ import { docsStore } from "../docs/docsStore";
 class NFTsStore {
   nfts: NFT[] = [];
   geoNFTContract: Contract | null = null;
+  editNft: NFT | null = null;
   isBusyMinting = false;
   isBusyFetching = false;
 
@@ -50,13 +51,17 @@ class NFTsStore {
         // For each tokenId, push to the list of NFTs
         for (let i = 0; i < tokenIds.length; i++) {
           const metadataURI = metadataURIs[i];
+          // TODO: Load ceramic data in parallel
           const metadata = await docsStore.readDocument(metadataURI);
+          const nftId = BigNumber.from(tokenIds[i]).toNumber();
 
           nfts.push({
-            id: BigNumber.from(tokenIds[i]).toNumber(),
+            id: nftId,
             metadata: metadata,
             geojson: geojsons[i],
           });
+
+          docsStore.nftDocuments[nftId] = metadataURI;
         }
 
         console.log("NFTS: ", nfts);
@@ -129,6 +134,19 @@ class NFTsStore {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  updateNftMetadata = async (
+    nftId: number,
+    metadata: NFTMetadata
+  ): Promise<void> => {
+    await docsStore.updateDocument(nftId, metadata);
+    this.nfts = this.nfts.map((nft) => {
+      if (nft.id === nftId) {
+        return { ...nft, metadata };
+      }
+      return nft;
+    });
   };
 
   private getGeoNFTContract = async (
