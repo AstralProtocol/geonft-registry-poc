@@ -17,110 +17,133 @@ import { initMap, draw, select, geoNftsLayer } from "./OpenLayersComponents";
 import AddNFTForm, { Metadata } from "../../features/nfts/AddNFTForm";
 import { nftsStore } from "../../features/nfts/nftsStore";
 
+enum Status {
+  IDLE,
+  DRAW,
+  MODIFY,
+  EDIT_METADATA,
+}
+
 const MapWrapper = observer((): JSX.Element => {
   const { nfts } = nftsStore;
 
   const [map, setMap] = useState<Map>();
-  const [drawEnabled, setDrawEnabled] = useState(false);
+  const [status, setStatus] = useState<Status>(Status.IDLE);
   const [formIsOpen, setFormIsOpen] = useState(false);
   const [geojson, setGeojson] = useState("");
   const [metadata, setMetadata] = useState<Metadata | undefined>();
 
-  const toggleDraw = () => {
-    draw.setActive(!drawEnabled);
-    setDrawEnabled(!drawEnabled);
+  // const toggleDraw = () => {
+  //   draw.setActive(!drawEnabled);
+  //   setDrawEnabled(!drawEnabled);
+  // };
+
+  // const createGeoNFT = () => {
+  //   const editLayer = getEditLayer();
+  //   const editFeatures = editLayer.getSource()?.getFeatures();
+
+  //   if (!editFeatures || editFeatures.length === 0) {
+  //     throw new Error("Geometry cannot be empty");
+  //   }
+
+  //   const multiPolygonFeature =
+  //     convertPolygonFeaturesToMultiPolygonFeature(editFeatures);
+  //   const geojson = new GeoJSON().writeFeature(multiPolygonFeature);
+
+  //   setMetadata(undefined);
+  //   setGeojson(geojson);
+  //   setFormIsOpen(true);
+  // };
+
+  // const editGeoNFT = () => {
+  //   const { editNft } = nftsStore;
+
+  //   if (!editNft) {
+  //     return;
+  //   }
+
+  //   setMetadata(editNft.metadata);
+  //   setGeojson(editNft.geojson);
+  //   setFormIsOpen(true);
+  // };
+
+  // const setSelectedFeatureAsEditNft = () => {
+  //   const selectedFeature = select.getFeatures().getArray()[0];
+
+  //   if (!selectedFeature) {
+  //     return;
+  //   }
+
+  //   const nftId = selectedFeature.getId() as number;
+  //   if (!nftId && nftId !== 0) {
+  //     throw new Error("NFT ID is not defined");
+  //   }
+
+  //   const editNft = nfts.find((nft) => nft.id === nftId);
+
+  //   if (!editNft) {
+  //     throw new Error("NFT not found");
+  //   }
+
+  //   nftsStore.editNft = editNft;
+  // };
+
+  // const convertPolygonFeaturesToMultiPolygonFeature = (
+  //   features: Feature<Polygon>[]
+  // ): Feature<MultiPolygon> => {
+  //   const multiPolygonCoordinatesArray = features.map((feature) => {
+  //     const geometry = (feature.getGeometry() as Polygon) || new Polygon([]);
+  //     return geometry.getCoordinates();
+  //   });
+
+  //   const multiPolygonFeature = new Feature({
+  //     geometry: new MultiPolygon(multiPolygonCoordinatesArray),
+  //   });
+
+  //   return multiPolygonFeature;
+  // };
+
+  // const getEditLayer = (): VectorLayer<VectorSource<Polygon>> => {
+  //   if (!map) {
+  //     throw new Error("Map is not initialized");
+  //   }
+
+  //   const layer = map
+  //     .getLayers()
+  //     .getArray()
+  //     .find((layer) => {
+  //       return layer.getProperties().id === "edit-layer";
+  //     }) as unknown as VectorLayer<VectorSource<Polygon>>;
+
+  //   if (!layer) {
+  //     throw new Error("Edit layer does not exists");
+  //   }
+
+  //   return layer;
+  // };
+
+  const draw = () => {
+    setStatus(Status.DRAW);
   };
 
-  const createGeoNFT = () => {
-    const editLayer = getEditLayer();
-    const editFeatures = editLayer.getSource()?.getFeatures();
-
-    if (!editFeatures || editFeatures.length === 0) {
-      throw new Error("Geometry cannot be empty");
-    }
-
-    const multiPolygonFeature =
-      convertPolygonFeaturesToMultiPolygonFeature(editFeatures);
-    const geojson = new GeoJSON().writeFeature(multiPolygonFeature);
-
-    setMetadata(undefined);
-    setGeojson(geojson);
-    setFormIsOpen(true);
+  const modify = () => {
+    setStatus(Status.MODIFY);
   };
 
-  const editGeoNFT = () => {
-    const { editNft } = nftsStore;
-
-    if (!editNft) {
-      return;
-    }
-
-    setMetadata(editNft.metadata);
-    setGeojson(editNft.geojson);
-    setFormIsOpen(true);
+  const editMetadata = () => {
+    setStatus(Status.EDIT_METADATA);
   };
 
-  const setSelectedFeatureAsEditNft = () => {
-    const selectedFeature = select.getFeatures().getArray()[0];
-
-    if (!selectedFeature) {
-      return;
-    }
-
-    console.log("SELECTED FEATURE", selectedFeature);
-    const nftId = selectedFeature.getId() as number;
-    console.log("SELECTED NFT ID", nftId);
-    if (!nftId && nftId !== 0) {
-      throw new Error("NFT ID is not defined");
-    }
-
-    const editNft = nfts.find((nft) => nft.id === nftId);
-
-    if (!editNft) {
-      throw new Error("NFT not found");
-    }
-
-    nftsStore.editNft = editNft;
+  const accept = () => {
+    setStatus(Status.IDLE);
   };
 
-  const convertPolygonFeaturesToMultiPolygonFeature = (
-    features: Feature<Polygon>[]
-  ): Feature<MultiPolygon> => {
-    const multiPolygonCoordinatesArray = features.map((feature) => {
-      const geometry = (feature.getGeometry() as Polygon) || new Polygon([]);
-      return geometry.getCoordinates();
-    });
-
-    const multiPolygonFeature = new Feature({
-      geometry: new MultiPolygon(multiPolygonCoordinatesArray),
-    });
-
-    return multiPolygonFeature;
-  };
-
-  const getEditLayer = (): VectorLayer<VectorSource<Polygon>> => {
-    if (!map) {
-      throw new Error("Map is not initialized");
-    }
-
-    const layer = map
-      .getLayers()
-      .getArray()
-      .find((layer) => {
-        return layer.getProperties().id === "edit-layer";
-      }) as unknown as VectorLayer<VectorSource<Polygon>>;
-
-    if (!layer) {
-      throw new Error("Edit layer does not exists");
-    }
-
-    return layer;
+  const cancel = () => {
+    setStatus(Status.IDLE);
   };
 
   useEffect(() => {
     initMap.setTarget("map");
-
-    setDrawEnabled(false);
     setMap(initMap);
   }, []);
 
@@ -140,40 +163,57 @@ const MapWrapper = observer((): JSX.Element => {
     });
   }, [nfts]);
 
-  useEffect(() => {
-    editGeoNFT();
-  }, [nftsStore.editNft]);
+  // useEffect(() => {
+  //   editGeoNFT();
+  // }, [nftsStore.editNft]);
 
   return (
-    <div>
+    <Box position="relative">
       <Box id="map" width="100%" height="400px" position="relative">
         {nftsStore.isBusyFetching && <NFTsLoaderDisplay />}
       </Box>
-      <Box mt={2} display="flex" flexDirection="row" gap={2}>
+      <Box
+        position="absolute"
+        top={8}
+        left={8}
+        display="flex"
+        flexDirection="column"
+        gap={2}
+        padding={1}
+        borderRadius={1}
+        bgcolor="#00000052"
+      >
         <Button
           variant="contained"
-          color={drawEnabled ? "secondary" : "primary"}
-          onClick={toggleDraw}
+          onClick={draw}
+          disabled={status === Status.DRAW}
         >
-          {drawEnabled ? "Disable Draw" : "Enable Draw"}
+          Draw
         </Button>
-        <Button variant="contained" onClick={createGeoNFT}>
-          <Tooltip title="Add NFT" placement="top">
-            <i className="material-icons">add</i>
-          </Tooltip>
-          Add GeoNFT
+        <Button
+          variant="contained"
+          onClick={modify}
+          disabled={status === Status.MODIFY}
+        >
+          Modify
         </Button>
-        <Button variant="contained" onClick={setSelectedFeatureAsEditNft}>
-          Edit GeoNFT
+        <Button variant="contained" onClick={editMetadata}>
+          Edit metadata
         </Button>
-        <AddNFTForm
-          open={formIsOpen}
-          metadata={metadata}
-          geojson={geojson}
-          closeForm={() => setFormIsOpen(false)}
-        />
+        <Button variant="contained" color="secondary" onClick={accept}>
+          Accept
+        </Button>
+        <Button variant="contained" color="error" onClick={cancel}>
+          Cancel
+        </Button>
       </Box>
-    </div>
+      <AddNFTForm
+        open={formIsOpen}
+        metadata={metadata}
+        geojson={geojson}
+        closeForm={() => setFormIsOpen(false)}
+      />
+    </Box>
   );
 });
 

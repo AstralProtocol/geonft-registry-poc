@@ -7,7 +7,7 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 class WalletStore {
   address: string | null = null;
   balance: string | null = null;
-  status: WalletStatusEnums = WalletStatusEnums.DISCONNECTED;
+  status: WalletStatusEnums = WalletStatusEnums.CONNECTED;
   // ipfsClient: IPFSHTTPClient | null = null;
   ipfsClient = true; // Mock ipfsClient for now. It will only be used on image storage
   provider: any | null = null;
@@ -97,21 +97,21 @@ class WalletStore {
   };
 }
 
-const ipfsOptions = {
-  host: "ipfs.infura.io",
-  port: 5001,
-  protocol: "https",
-  apiPath: "/api/v0",
-  headers: {
-    authorization:
-      "Basic " +
-      Buffer.from(
-        process.env.REACT_APP_PROJECT_ID +
-          ":" +
-          process.env.REACT_APP_PROJECT_SECRET
-      ).toString("base64"),
-  },
-};
+// const ipfsOptions = {
+//   host: "ipfs.infura.io",
+//   port: 5001,
+//   protocol: "https",
+//   apiPath: "/api/v0",
+//   headers: {
+//     authorization:
+//       "Basic " +
+//       Buffer.from(
+//         process.env.REACT_APP_PROJECT_ID +
+//           ":" +
+//           process.env.REACT_APP_PROJECT_SECRET
+//       ).toString("base64"),
+//   },
+// };
 
 export enum WalletStatusEnums {
   DISCONNECTED,

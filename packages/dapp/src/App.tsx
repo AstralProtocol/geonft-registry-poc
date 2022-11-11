@@ -82,7 +82,7 @@ const App = observer(() => {
     <ThemeProvider theme={theme}>
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         <Grid container rowSpacing={5}>
           <Grid item xs={12} mt={4}>
             <Typography variant="h4" component="h1" gutterBottom>
@@ -98,7 +98,7 @@ const App = observer(() => {
                 <Box flexGrow={1}>
                   <Map />
                 </Box>
-                <Box width="400px">
+                <Box width="500px">
                   <NFTsList />
                 </Box>
               </Box>
