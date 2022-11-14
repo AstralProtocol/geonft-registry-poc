@@ -64,7 +64,6 @@ class NFTsStore {
           docsStore.nftDocuments[nftId] = metadataURI;
         }
 
-        console.log("NFTS: ", nfts);
         this.nfts = nfts;
       } catch (error) {
         console.log("Error fetching NFT list:", error);
@@ -84,7 +83,7 @@ class NFTsStore {
     metadataURI: string;
     geojson: string;
   }): Promise<void> => {
-    console.log("fetching");
+    console.log("minting");
 
     try {
       const { address } = walletStore;

@@ -44,11 +44,108 @@ const MapWrapper = observer((): JSX.Element => {
     Feature<MultiPolygon> | undefined
   >();
 
-  // const toggleDraw = () => {
-  //   draw.setActive(true);
-  //   setDrawEnabled(!drawEnabled);
-  // };
+  useEffect(() => {
+    initMap.setTarget("map");
 
+    // TODO: this event is ignored when draw is active. Drawing and deleting are incompatible.
+    // initMap.on("click", (e) => {
+    //   // TODO: status is not updated when event trigger; always idle
+    //   if (status !== Status.MODIFY) return;
+    //   initMap.forEachFeatureAtPixel(e.pixel, (feature) => {
+    //     // console.log("Feature: ", feature);
+    //     _getEditLayer()
+    //       .getSource()
+    //       ?.removeFeature(feature as unknown as Feature<Polygon>);
+    //   });
+    // });
+
+    select.on("select", (e) => {
+      const selectedFeature = e.target.getFeatures().getArray()[0];
+      setSelectedFeature(selectedFeature);
+    });
+
+    setMap(initMap);
+  }, []);
+
+  useEffect(() => {
+    if (!nfts || nfts.length === 0) return;
+
+    nfts.forEach((nft) => {
+      const { geojson, metadata } = nft;
+      const geojsonFeatures = new GeoJSON().readFeatures(
+        JSON.parse(geojson)
+      ) as Feature<MultiPolygon>[];
+
+      const feature = geojsonFeatures[0];
+      feature.setId(nft.id);
+      feature.setProperties(metadata);
+      geoNftsLayer.getSource()?.addFeatures([feature]);
+    });
+  }, [nfts]);
+
+  useEffect(() => {
+    _editNftMetadata();
+  }, [nftsStore.editNft]);
+
+  // PUBLIC FUNCTIONS
+  const startDraw = () => {
+    setStatus(Status.DRAW);
+    draw.setActive(true);
+  };
+
+  const startModify = () => {
+    if (!selectedFeature) {
+      alert("Please select a feature to modify");
+      return;
+    }
+    const polygonFeatures =
+      _convertMultiPolygonFeatureToPolygonFeatures(selectedFeature);
+
+    // Remove feature from geoNftsLayer and add it to editLayer
+    geoNftsLayer.getSource()?.removeFeature(selectedFeature);
+    editLayer.getSource()?.addFeatures(polygonFeatures);
+    select.setActive(false);
+    modify.setActive(true);
+    // draw.setActive(true);
+    setStatus(Status.MODIFY);
+  };
+
+  const editMetadata = () => {
+    setStatus(Status.EDIT_METADATA);
+    _setSelectedFeatureAsEditNft();
+  };
+
+  const accept = async () => {
+    if (status === Status.DRAW) {
+      try {
+        _createGeoNFT();
+      } catch (error) {
+        console.error(error);
+        alert("Could not create GeoNFT");
+      }
+    }
+
+    if (status === Status.MODIFY) {
+      try {
+        await _updateGeoNFTGeometry();
+      } catch (error) {
+        console.error(error);
+        alert("Could not modify GeoNFT geometry");
+      }
+    }
+
+    _resetEdition();
+    setStatus(Status.IDLE);
+  };
+
+  const cancel = () => {
+    if (confirm("Are you sure you want to cancel?")) {
+      _resetEdition();
+      setStatus(Status.IDLE);
+    }
+  };
+
+  // PRIVATE FUNCTIONS
   const _createGeoNFT = () => {
     const editLayer = _getEditLayer();
     const editFeatures = editLayer.getSource()?.getFeatures();
@@ -67,7 +164,6 @@ const MapWrapper = observer((): JSX.Element => {
   };
 
   const _updateGeoNFTGeometry = async () => {
-    console.log("updateGeoNFTGeometry");
     if (!selectedFeature) {
       throw new Error("No feature selected");
     }
@@ -80,10 +176,8 @@ const MapWrapper = observer((): JSX.Element => {
 
     const modifiedFeatureMultiPolygon =
       _convertPolygonFeaturesToMultiPolygonFeature(modifiedFeaturesPolygon);
-    console.log("MODIFIED FEATURE: ", modifiedFeatureMultiPolygon);
     const nftId = selectedFeature.getId() as number;
     const newGeojson = new GeoJSON().writeFeature(modifiedFeatureMultiPolygon);
-    console.log("UPDATING GEOJSON: ", nftId, newGeojson);
     const success = await nftsStore.updateNftGeojson({
       tokenId: nftId,
       geojson: newGeojson,
@@ -94,7 +188,7 @@ const MapWrapper = observer((): JSX.Element => {
     }
   };
 
-  const editNftMetadata = () => {
+  const _editNftMetadata = () => {
     const { editNft } = nftsStore;
 
     if (!editNft) {
@@ -164,102 +258,13 @@ const MapWrapper = observer((): JSX.Element => {
 
   const _resetEdition = () => {
     const editLayerSource = _getEditLayer().getSource();
-    const features = editLayerSource?.getFeatures();
-
-    if (features && features.length > 0) {
-      select.getFeatures().clear();
-      select.setActive(true);
-      draw.setActive(false);
-      modify.setActive(false);
-      editLayerSource?.clear();
-    }
+    select.getFeatures().clear();
+    select.setActive(true);
+    draw.setActive(false);
+    modify.setActive(false);
+    editLayerSource?.clear();
+    setSelectedFeature(undefined);
   };
-
-  const startDraw = () => {
-    setStatus(Status.DRAW);
-    draw.setActive(true);
-  };
-
-  const startModify = () => {
-    if (!selectedFeature) {
-      alert("Please select a feature to modify");
-      return;
-    }
-
-    geoNftsLayer.getSource()?.removeFeature(selectedFeature);
-    const polygonFeatures =
-      _convertMultiPolygonFeatureToPolygonFeatures(selectedFeature);
-    editLayer.getSource()?.addFeatures(polygonFeatures);
-    select.setActive(false);
-    modify.setActive(true);
-    setStatus(Status.MODIFY);
-  };
-
-  const editMetadata = () => {
-    setStatus(Status.EDIT_METADATA);
-    _setSelectedFeatureAsEditNft();
-  };
-
-  const accept = async () => {
-    if (status === Status.DRAW) {
-      try {
-        _createGeoNFT();
-      } catch (error) {
-        console.error(error);
-        alert("Could not create GeoNFT");
-      }
-    }
-
-    if (status === Status.MODIFY) {
-      try {
-        await _updateGeoNFTGeometry();
-      } catch (error) {
-        console.error(error);
-        alert("Could not modify GeoNFT geometry");
-      }
-    }
-
-    _resetEdition();
-    setStatus(Status.IDLE);
-  };
-
-  const cancel = () => {
-    if (confirm("Are you sure you want to cancel?")) {
-      _resetEdition();
-      setStatus(Status.IDLE);
-    }
-  };
-
-  useEffect(() => {
-    initMap.setTarget("map");
-
-    select.on("select", (e) => {
-      const selectedFeature = e.target.getFeatures().getArray()[0];
-      setSelectedFeature(selectedFeature);
-    });
-
-    setMap(initMap);
-  }, []);
-
-  useEffect(() => {
-    if (!nfts || nfts.length === 0) return;
-
-    nfts.forEach((nft) => {
-      const { geojson, metadata } = nft;
-      const geojsonFeatures = new GeoJSON().readFeatures(
-        JSON.parse(geojson)
-      ) as Feature<MultiPolygon>[];
-
-      const feature = geojsonFeatures[0];
-      feature.setId(nft.id);
-      feature.setProperties(metadata);
-      geoNftsLayer.getSource()?.addFeatures([feature]);
-    });
-  }, [nfts]);
-
-  useEffect(() => {
-    editNftMetadata();
-  }, [nftsStore.editNft]);
 
   return (
     <Box position="relative">
@@ -282,7 +287,7 @@ const MapWrapper = observer((): JSX.Element => {
           onClick={startDraw}
           disabled={status === Status.DRAW || status === Status.MODIFY}
         >
-          Draw
+          Create NFT
         </Button>
         <Button
           variant="contained"
@@ -293,12 +298,25 @@ const MapWrapper = observer((): JSX.Element => {
             !selectedFeature
           }
         >
-          Modify
+          Edit geometry
         </Button>
-        <Button variant="contained" onClick={editMetadata}>
+        <Button
+          variant="contained"
+          onClick={editMetadata}
+          disabled={
+            status === Status.DRAW ||
+            status === Status.MODIFY ||
+            !selectedFeature
+          }
+        >
           Edit metadata
         </Button>
-        <Button variant="contained" color="secondary" onClick={accept}>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={accept}
+          disabled={!(status === Status.DRAW || status === Status.MODIFY)}
+        >
           Accept
         </Button>
         <Button variant="contained" color="error" onClick={cancel}>
