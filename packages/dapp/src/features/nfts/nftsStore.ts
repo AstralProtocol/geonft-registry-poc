@@ -87,12 +87,8 @@ class NFTsStore {
     console.log("fetching");
 
     try {
-      const { address, ipfsClient } = walletStore;
+      const { address } = walletStore;
       const newNFT = {} as NFT;
-
-      if (!ipfsClient) {
-        throw new Error("IPFS client not initialized");
-      }
 
       if (!address) {
         throw new Error("Address not defined");
@@ -134,6 +130,49 @@ class NFTsStore {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  updateNftGeojson = async ({
+    tokenId,
+    geojson,
+  }: {
+    tokenId: number;
+    geojson: string;
+  }): Promise<boolean> => {
+    const { address } = walletStore;
+
+    if (!address) {
+      throw new Error("Address not defined");
+    }
+
+    if (!this.geoNFTContract) {
+      throw new Error("GeoNFT contract not initialized");
+    }
+
+    return await this.geoNFTContract
+      .setGeoJson(tokenId, geojson)
+      .then(async (tx: TransactionResponse) => {
+        console.log("update geojson tx hash:", tx.hash);
+        console.log("update geojson tx:", tx);
+        const contractReceipt: TransactionReceipt = await tx.wait();
+        console.log("transaction receipt:", contractReceipt);
+
+        if (contractReceipt.status !== 1) {
+          throw new Error("Transaction failed");
+        }
+
+        console.log("update geojson tx success");
+        // get nft id from receipt
+        const updatedNft = this.nfts.find((nft) => nft.id === tokenId);
+
+        if (updatedNft) {
+          updatedNft.geojson = geojson;
+          console.log("updateNft", updatedNft);
+          return true;
+        }
+
+        return false;
+      });
   };
 
   updateNftMetadata = async (

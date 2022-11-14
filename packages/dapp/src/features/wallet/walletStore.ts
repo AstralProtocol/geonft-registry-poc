@@ -7,7 +7,7 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 class WalletStore {
   address: string | null = null;
   balance: string | null = null;
-  status: WalletStatusEnums = WalletStatusEnums.CONNECTED;
+  status: WalletStatusEnums = WalletStatusEnums.DISCONNECTED;
   // ipfsClient: IPFSHTTPClient | null = null;
   ipfsClient = true; // Mock ipfsClient for now. It will only be used on image storage
   provider: any | null = null;

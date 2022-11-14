@@ -98,7 +98,7 @@ const App = observer(() => {
                 <Box flexGrow={1}>
                   <Map />
                 </Box>
-                <Box width="500px">
+                <Box width="400px">
                   <NFTsList />
                 </Box>
               </Box>

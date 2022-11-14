@@ -11,7 +11,7 @@ import { fromLonLat } from "ol/proj";
 import { singleClick } from "ol/events/condition";
 
 // Setup layers
-const cartographicBasemap = new TileLayer({
+export const cartographicBasemap = new TileLayer({
   source: new OSM(),
 });
 
