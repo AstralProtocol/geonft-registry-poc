@@ -4,7 +4,12 @@ import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import OSM from "ol/source/OSM";
-import { Select, Draw, Modify } from "ol/interaction";
+import {
+  Select,
+  Draw,
+  Modify,
+  defaults as defaultInteractions,
+} from "ol/interaction";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style";
 import { Polygon, MultiPolygon } from "ol/geom";
 import { fromLonLat } from "ol/proj";
@@ -102,6 +107,6 @@ export const initMap = new Map({
     center: fromLonLat([-4.13, 39.48]),
     zoom: 6,
   }),
+  interactions: defaultInteractions().extend([select, draw, modify]),
   controls: [],
-  interactions: [select, draw, modify],
 });

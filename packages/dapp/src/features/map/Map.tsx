@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import {
-  Button,
-  Box,
-  Tooltip,
-  Typography,
-  CircularProgress,
-} from "@mui/material";
+import { Button, Box, Typography, CircularProgress } from "@mui/material";
 import Map from "ol/Map";
 import Feature from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
@@ -48,16 +42,16 @@ const MapWrapper = observer((): JSX.Element => {
     initMap.setTarget("map");
 
     // TODO: this event is ignored when draw is active. Drawing and deleting are incompatible.
-    // initMap.on("click", (e) => {
-    //   // TODO: status is not updated when event trigger; always idle
-    //   if (status !== Status.MODIFY) return;
-    //   initMap.forEachFeatureAtPixel(e.pixel, (feature) => {
-    //     // console.log("Feature: ", feature);
-    //     _getEditLayer()
-    //       .getSource()
-    //       ?.removeFeature(feature as unknown as Feature<Polygon>);
-    //   });
-    // });
+    initMap.on("click", (e) => {
+      // TODO: status is not updated when event trigger; always idle
+      if (status !== Status.MODIFY) return;
+      initMap.forEachFeatureAtPixel(e.pixel, (feature) => {
+        // console.log("Feature: ", feature);
+        _getEditLayer()
+          .getSource()
+          ?.removeFeature(feature as unknown as Feature<Polygon>);
+      });
+    });
 
     select.on("select", (e) => {
       const selectedFeature = e.target.getFeatures().getArray()[0];
@@ -106,7 +100,7 @@ const MapWrapper = observer((): JSX.Element => {
     editLayer.getSource()?.addFeatures(polygonFeatures);
     select.setActive(false);
     modify.setActive(true);
-    // draw.setActive(true);
+    draw.setActive(true);
     setStatus(Status.MODIFY);
   };
 
