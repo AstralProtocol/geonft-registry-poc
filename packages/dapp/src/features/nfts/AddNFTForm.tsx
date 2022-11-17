@@ -16,7 +16,7 @@ import { docsStore } from "../docs/docsStore";
 import { nftsStore } from "./nftsStore";
 
 const AddNFTForm = observer((props: NFTProps) => {
-  const { open, metadata, geojson, closeForm } = props;
+  const { open, metadata, geojson, closeForm, onAccept } = props;
 
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
@@ -101,6 +101,7 @@ const AddNFTForm = observer((props: NFTProps) => {
       setDescription("");
       setFileUrl("");
       setError("");
+      onAccept();
       handleClose();
     } catch (err: any) {
       setError(err.message);
@@ -209,6 +210,7 @@ interface NFTProps {
   metadata: Metadata | undefined;
   geojson?: string;
   closeForm: () => void;
+  onAccept: () => void;
 }
 
 export default AddNFTForm;

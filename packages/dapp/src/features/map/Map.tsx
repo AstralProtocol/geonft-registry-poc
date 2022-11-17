@@ -128,8 +128,6 @@ const MapWrapper = observer((): JSX.Element => {
         alert("Could not modify GeoNFT geometry");
       }
     }
-
-    _resetEdition();
     setStatus(Status.IDLE);
   };
 
@@ -160,20 +158,34 @@ const MapWrapper = observer((): JSX.Element => {
 
   // PRIVATE FUNCTIONS
   const _createNft = () => {
-    const editLayer = _getEditLayer();
-    const editFeatures = editLayer.getSource()?.getFeatures();
+    const createdFeaturesPolygon = _getEditLayer().getSource()?.getFeatures();
 
-    if (!editFeatures || editFeatures.length === 0) {
+    if (!createdFeaturesPolygon || createdFeaturesPolygon.length === 0) {
       throw new Error("Geometry cannot be empty");
     }
 
-    const multiPolygonFeature =
-      _convertPolygonFeaturesToMultiPolygonFeature(editFeatures);
-    const geojson = new GeoJSON().writeFeature(multiPolygonFeature);
+    const createdFeatureMultiPolygon =
+      _convertPolygonFeaturesToMultiPolygonFeature(createdFeaturesPolygon);
+    const geojson = new GeoJSON().writeFeature(createdFeatureMultiPolygon);
 
     setMetadata(undefined);
     setGeojson(geojson);
     setFormIsOpen(true);
+  };
+
+  const _onFormSubmit = () => {
+    const createdFeaturesPolygon = _getEditLayer().getSource()?.getFeatures();
+
+    if (!createdFeaturesPolygon || createdFeaturesPolygon.length === 0) {
+      console.log("INSIDE ERROR");
+      throw new Error("Geometry cannot be empty");
+    }
+
+    const createdFeatureMultiPolygon =
+      _convertPolygonFeaturesToMultiPolygonFeature(createdFeaturesPolygon);
+
+    geoNftsLayer.getSource()?.addFeature(createdFeatureMultiPolygon);
+    _resetEdition();
   };
 
   const _updateNftGeometry = async () => {
@@ -392,6 +404,7 @@ const MapWrapper = observer((): JSX.Element => {
         open={formIsOpen}
         metadata={metadata}
         geojson={geojson}
+        onAccept={_onFormSubmit}
         closeForm={() => setFormIsOpen(false)}
       />
     </Box>

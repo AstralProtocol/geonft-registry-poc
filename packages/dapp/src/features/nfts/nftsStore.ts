@@ -98,7 +98,7 @@ class NFTsStore {
       }
 
       try {
-        await this.geoNFTContract
+        return await this.geoNFTContract
           .safeMint(address, metadataURI, geojson)
           .then(async (tx: TransactionResponse) => {
             console.log("mint tx hash:", tx.hash);
