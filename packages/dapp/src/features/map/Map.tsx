@@ -237,10 +237,19 @@ const MapWrapper = observer((): JSX.Element => {
   const _deleteClickedFeature = (map: Map, e: MapBrowserEvent<any>) => {
     if (!map || !isDeleteFeatureActive) return;
 
+    const editLayerSource = editLayer.getSource();
+
+    if (!editLayerSource) return;
+
     map.forEachFeatureAtPixel(e.pixel, (feature) => {
-      editLayer
-        .getSource()
-        ?.removeFeature(feature as unknown as Feature<Polygon>);
+      const numberOfFeatures = editLayerSource.getFeatures().length;
+
+      if (numberOfFeatures < 2) {
+        alert("Cannot delete last feature");
+        return;
+      }
+
+      editLayerSource.removeFeature(feature as unknown as Feature<Polygon>);
     });
   };
 
