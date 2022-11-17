@@ -18,19 +18,30 @@ import {
 } from "./OpenLayersComponents";
 import AddNFTForm, { Metadata } from "../../features/nfts/AddNFTForm";
 import { nftsStore } from "../../features/nfts/nftsStore";
+import { MapBrowserEvent } from "ol";
 
 enum Status {
   IDLE,
-  DRAW,
-  MODIFY,
+  CREATE,
+  EDIT_GEOMETRY,
   EDIT_METADATA,
 }
+
+enum EditionStatus {
+  DRAW,
+  MODIFY,
+  DELETE,
+}
+
+let isDeleteFeatureActive = false;
 
 const MapWrapper = observer((): JSX.Element => {
   const { nfts } = nftsStore;
 
-  const [map, setMap] = useState<Map>();
   const [status, setStatus] = useState<Status>(Status.IDLE);
+  const [editionStatus, setEditionStatus] = useState<EditionStatus>(
+    EditionStatus.MODIFY
+  );
   const [formIsOpen, setFormIsOpen] = useState(false);
   const [geojson, setGeojson] = useState("");
   const [metadata, setMetadata] = useState<Metadata | undefined>();
@@ -40,25 +51,11 @@ const MapWrapper = observer((): JSX.Element => {
 
   useEffect(() => {
     initMap.setTarget("map");
-
-    // TODO: this event is ignored when draw is active. Drawing and deleting are incompatible.
-    initMap.on("click", (e) => {
-      // TODO: status is not updated when event trigger; always idle
-      if (status !== Status.MODIFY) return;
-      initMap.forEachFeatureAtPixel(e.pixel, (feature) => {
-        // console.log("Feature: ", feature);
-        _getEditLayer()
-          .getSource()
-          ?.removeFeature(feature as unknown as Feature<Polygon>);
-      });
-    });
-
+    initMap.on("click", (e) => _deleteClickedFeature(initMap, e));
     select.on("select", (e) => {
       const selectedFeature = e.target.getFeatures().getArray()[0];
       setSelectedFeature(selectedFeature);
     });
-
-    setMap(initMap);
   }, []);
 
   useEffect(() => {
@@ -81,13 +78,18 @@ const MapWrapper = observer((): JSX.Element => {
     _editNftMetadata();
   }, [nftsStore.editNft]);
 
+  useEffect(() => {
+    const isDeleteStatus = editionStatus === EditionStatus.DELETE;
+    isDeleteFeatureActive = isDeleteStatus;
+  }, [editionStatus]);
+
   // PUBLIC FUNCTIONS
-  const startDraw = () => {
-    setStatus(Status.DRAW);
+  const createNft = () => {
+    setStatus(Status.CREATE);
     draw.setActive(true);
   };
 
-  const startModify = () => {
+  const editGeometry = () => {
     if (!selectedFeature) {
       alert("Please select a feature to modify");
       return;
@@ -99,9 +101,8 @@ const MapWrapper = observer((): JSX.Element => {
     geoNftsLayer.getSource()?.removeFeature(selectedFeature);
     editLayer.getSource()?.addFeatures(polygonFeatures);
     select.setActive(false);
-    modify.setActive(true);
-    draw.setActive(true);
-    setStatus(Status.MODIFY);
+    setStatus(Status.EDIT_GEOMETRY);
+    setEditionDrawMode();
   };
 
   const editMetadata = () => {
@@ -110,18 +111,18 @@ const MapWrapper = observer((): JSX.Element => {
   };
 
   const accept = async () => {
-    if (status === Status.DRAW) {
+    if (status === Status.CREATE) {
       try {
-        _createGeoNFT();
+        _createNft();
       } catch (error) {
         console.error(error);
         alert("Could not create GeoNFT");
       }
     }
 
-    if (status === Status.MODIFY) {
+    if (status === Status.EDIT_GEOMETRY) {
       try {
-        await _updateGeoNFTGeometry();
+        await _updateNftGeometry();
       } catch (error) {
         console.error(error);
         alert("Could not modify GeoNFT geometry");
@@ -139,8 +140,26 @@ const MapWrapper = observer((): JSX.Element => {
     }
   };
 
+  const setEditionDrawMode = () => {
+    setEditionStatus(EditionStatus.DRAW);
+    modify.setActive(false);
+    draw.setActive(true);
+  };
+
+  const setEditionModifyMode = () => {
+    setEditionStatus(EditionStatus.MODIFY);
+    modify.setActive(true);
+    draw.setActive(false);
+  };
+
+  const setEditionDeleteMode = () => {
+    setEditionStatus(EditionStatus.DELETE);
+    modify.setActive(false);
+    draw.setActive(false);
+  };
+
   // PRIVATE FUNCTIONS
-  const _createGeoNFT = () => {
+  const _createNft = () => {
     const editLayer = _getEditLayer();
     const editFeatures = editLayer.getSource()?.getFeatures();
 
@@ -157,7 +176,7 @@ const MapWrapper = observer((): JSX.Element => {
     setFormIsOpen(true);
   };
 
-  const _updateGeoNFTGeometry = async () => {
+  const _updateNftGeometry = async () => {
     if (!selectedFeature) {
       throw new Error("No feature selected");
     }
@@ -213,6 +232,16 @@ const MapWrapper = observer((): JSX.Element => {
     }
 
     nftsStore.editNft = editNft;
+  };
+
+  const _deleteClickedFeature = (map: Map, e: MapBrowserEvent<any>) => {
+    if (!map || !isDeleteFeatureActive) return;
+
+    map.forEachFeatureAtPixel(e.pixel, (feature) => {
+      editLayer
+        .getSource()
+        ?.removeFeature(feature as unknown as Feature<Polygon>);
+    });
   };
 
   const _convertPolygonFeaturesToMultiPolygonFeature = (
@@ -278,17 +307,17 @@ const MapWrapper = observer((): JSX.Element => {
       >
         <Button
           variant="contained"
-          onClick={startDraw}
-          disabled={status === Status.DRAW || status === Status.MODIFY}
+          onClick={createNft}
+          disabled={status === Status.CREATE || status === Status.EDIT_GEOMETRY}
         >
           Create NFT
         </Button>
         <Button
           variant="contained"
-          onClick={startModify}
+          onClick={editGeometry}
           disabled={
-            status === Status.DRAW ||
-            status === Status.MODIFY ||
+            status === Status.CREATE ||
+            status === Status.EDIT_GEOMETRY ||
             !selectedFeature
           }
         >
@@ -298,8 +327,8 @@ const MapWrapper = observer((): JSX.Element => {
           variant="contained"
           onClick={editMetadata}
           disabled={
-            status === Status.DRAW ||
-            status === Status.MODIFY ||
+            status === Status.CREATE ||
+            status === Status.EDIT_GEOMETRY ||
             !selectedFeature
           }
         >
@@ -309,12 +338,45 @@ const MapWrapper = observer((): JSX.Element => {
           variant="contained"
           color="secondary"
           onClick={accept}
-          disabled={!(status === Status.DRAW || status === Status.MODIFY)}
+          disabled={
+            !(status === Status.CREATE || status === Status.EDIT_GEOMETRY)
+          }
         >
           Accept
         </Button>
         <Button variant="contained" color="error" onClick={cancel}>
           Cancel
+        </Button>
+      </Box>
+      <Box
+        position="absolute"
+        bottom={8}
+        left={8}
+        display={status === Status.EDIT_GEOMETRY ? "flex" : "none"}
+        padding={1}
+        borderRadius={1}
+        bgcolor="#000000d4"
+      >
+        <Button
+          color="info"
+          onClick={setEditionDrawMode}
+          disabled={editionStatus === EditionStatus.DRAW}
+        >
+          Draw
+        </Button>
+        <Button
+          color="warning"
+          onClick={setEditionModifyMode}
+          disabled={editionStatus === EditionStatus.MODIFY}
+        >
+          Modify
+        </Button>
+        <Button
+          color="error"
+          onClick={setEditionDeleteMode}
+          disabled={editionStatus === EditionStatus.DELETE}
+        >
+          Delete
         </Button>
       </Box>
       <AddNFTForm
