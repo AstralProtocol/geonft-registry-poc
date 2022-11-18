@@ -42,7 +42,7 @@ const MapWrapper = observer((): JSX.Element => {
   const [editionStatus, setEditionStatus] = useState<EditionStatus>(
     EditionStatus.MODIFY
   );
-  const [formIsOpen, setFormIsOpen] = useState(false);
+  const [formIsOpen, setFormIsOpen] = useState(true);
   const [geojson, setGeojson] = useState("");
   const [metadata, setMetadata] = useState<Metadata | undefined>();
   const [selectedFeature, setSelectedFeature] = useState<

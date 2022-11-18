@@ -9,11 +9,14 @@ import {
   DialogTitle,
   Grid,
   TextField,
+  Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { walletStore } from "../wallet/walletStore";
 import { docsStore } from "../docs/docsStore";
 import { nftsStore } from "./nftsStore";
+
+const MOCK_IPFS_URL = "ipfs://QmfMPuqGuJ1XHpqd8pXY8BLzwSVLjV987bGNJpqhkCdFRN";
 
 const AddNFTForm = observer((props: NFTProps) => {
   const { open, metadata, geojson, closeForm, onAccept } = props;
@@ -22,9 +25,14 @@ const AddNFTForm = observer((props: NFTProps) => {
   const [name, setName] = useState(metadata?.name || "");
   const [description, setDescription] = useState(metadata?.description || "");
   const [fileUrl, setFileUrl] = useState(metadata?.image || "");
+  const [file, setFile] = useState<File | undefined>(undefined);
 
   const { ipfsClient } = walletStore;
   const { isBusyMinting } = nftsStore;
+
+  const imgSrc = file
+    ? URL.createObjectURL(file)
+    : fileUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 
   useEffect(() => {
     if (metadata) {
@@ -43,9 +51,10 @@ const AddNFTForm = observer((props: NFTProps) => {
 
   const onFileLoadChange = async (e: any) => {
     const file = e.target.files[0];
-    if (ipfsClient == null) {
-      throw new Error("IPFS client is not initialized");
-    }
+    setFile(file);
+    // if (ipfsClient == null) {
+    //   throw new Error("IPFS client is not initialized");
+    // }
     // try {
     //   const added = await ipfsClient.add(file, {
     //     progress: (prog: any) => console.log(`received: ${prog}`),
@@ -122,23 +131,35 @@ const AddNFTForm = observer((props: NFTProps) => {
                 id="upload-file"
                 name="upload-file"
                 type="file"
+                accept="image/*"
                 onChange={onFileLoadChange}
               />
               <Button color="secondary" variant="contained" component="span">
                 Upload image
               </Button>
+              <Typography
+                component="span"
+                variant="body2"
+                color="textSecondary"
+                ml={2}
+              >
+                {file?.name || "No file selected"}
+              </Typography>
             </label>
             <div>
-              {fileUrl && (
+              {(fileUrl || file) && (
                 <img
+                  id="image-preview"
                   className="rounded mt-4"
                   alt="upload"
-                  width="350"
-                  style={{ marginTop: "10px" }}
-                  src={`${fileUrl.replace(
-                    "ipfs://",
-                    "https://ipfs.infura.io/ipfs/"
-                  )}`}
+                  style={{
+                    marginTop: "10px",
+                    width: "auto",
+                    height: "auto",
+                    maxWidth: "100%",
+                    maxHeight: "350px",
+                  }}
+                  src={imgSrc}
                 />
               )}
             </div>
