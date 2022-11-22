@@ -16,7 +16,7 @@ import {
   modify,
   editLayer,
   geoNftsLayer,
-} from "./OpenLayersComponents";
+} from "./OpenLayersVariables";
 import NFTForm, { Metadata } from "../NFTForm";
 import { nftsStore } from "../../features/nfts/nftsStore";
 import { MapBrowserEvent } from "ol";
