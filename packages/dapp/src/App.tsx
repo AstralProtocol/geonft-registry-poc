@@ -3,10 +3,10 @@ import { ThemeProvider } from "@mui/material/styles";
 import { Container, CssBaseline, Box, Grid, Typography } from "@mui/material";
 // import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import theme from "./theme";
-import Wallet from "./features/wallet/Wallet";
+import Wallet from "./components/Wallet";
 import { walletStore, WalletStatusEnums } from "./features/wallet/walletStore";
-import { NFTsList } from "./features/nfts/NFTsList";
-import Map from "./features/map/Map";
+import { NFTsList } from "./components/NFTsList";
+import Map from "./components/map/Map";
 
 // function Footer() {
 //   const { status } = appStore.wallet;

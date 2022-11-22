@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toJS } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Button, Box, Typography, CircularProgress } from "@mui/material";
 import Map from "ol/Map";
@@ -16,7 +17,7 @@ import {
   editLayer,
   geoNftsLayer,
 } from "./OpenLayersComponents";
-import AddNFTForm, { Metadata } from "../../features/nfts/AddNFTForm";
+import NFTForm, { Metadata } from "../NFTForm";
 import { nftsStore } from "../../features/nfts/nftsStore";
 import { MapBrowserEvent } from "ol";
 
@@ -37,12 +38,13 @@ let isDeleteFeatureActive = false;
 
 const MapWrapper = observer((): JSX.Element => {
   const { nfts } = nftsStore;
+  console.log("MAP NFTS: ", toJS(nfts));
 
   const [status, setStatus] = useState<Status>(Status.IDLE);
   const [editionStatus, setEditionStatus] = useState<EditionStatus>(
     EditionStatus.MODIFY
   );
-  const [formIsOpen, setFormIsOpen] = useState(true);
+  const [formIsOpen, setFormIsOpen] = useState(false);
   const [geojson, setGeojson] = useState("");
   const [metadata, setMetadata] = useState<Metadata | undefined>();
   const [selectedFeature, setSelectedFeature] = useState<
@@ -400,7 +402,7 @@ const MapWrapper = observer((): JSX.Element => {
           Delete
         </Button>
       </Box>
-      <AddNFTForm
+      <NFTForm
         open={formIsOpen}
         metadata={metadata}
         geojson={geojson}

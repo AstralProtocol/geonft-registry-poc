@@ -8,7 +8,7 @@ import {
   ListItemText,
   CircularProgress,
 } from "@mui/material";
-import { nftsStore, NFT } from "./nftsStore";
+import { nftsStore, NFT } from "../features/nfts/nftsStore";
 
 export const NFTsList = observer((): JSX.Element => {
   const nfts = nftsStore.nfts;
@@ -18,15 +18,14 @@ export const NFTsList = observer((): JSX.Element => {
       return <NFTsLoaderDisplay />;
     }
 
-    return nfts.length === 0 ? (
-      <NoNFTsFound />
-    ) : (
-      <NFTs nfts={nfts} editMetadata={editMetadata} />
-    );
+    if (nfts.length === 0) {
+      return <NoNFTsFound />;
+    }
+
+    return <NFTs nfts={nfts} editMetadata={editMetadata} />;
   };
 
   const editMetadata = (nftId: number) => {
-    console.log("EDITING NFT ", nftId);
     const editNft = nfts.find((nft) => nft.id === nftId);
 
     if (editNft) {

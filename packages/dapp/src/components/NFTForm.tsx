@@ -12,14 +12,13 @@ import {
   Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { walletStore } from "../wallet/walletStore";
-import { docsStore } from "../docs/docsStore";
-import { nftsStore } from "./nftsStore";
+import { walletStore } from "../features/wallet/walletStore";
+import { docsStore } from "../features/docs/docsStore";
+import { nftsStore } from "../features/nfts/nftsStore";
 
-const MOCK_IPFS_URL = "ipfs://QmfMPuqGuJ1XHpqd8pXY8BLzwSVLjV987bGNJpqhkCdFRN";
-
-const AddNFTForm = observer((props: NFTProps) => {
+const NFTForm = observer((props: NFTProps) => {
   const { open, metadata, geojson, closeForm, onAccept } = props;
+  console.log("AddNFTForm metadata", metadata);
 
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
@@ -32,7 +31,9 @@ const AddNFTForm = observer((props: NFTProps) => {
 
   const imgSrc = file
     ? URL.createObjectURL(file)
-    : fileUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+    : `https://ipfs.io/ipfs/${fileUrl}`;
+
+  console.log("IMG SRC: ", imgSrc);
 
   useEffect(() => {
     if (metadata) {
@@ -52,19 +53,6 @@ const AddNFTForm = observer((props: NFTProps) => {
   const onFileLoadChange = async (e: any) => {
     const file = e.target.files[0];
     setFile(file);
-    // if (ipfsClient == null) {
-    //   throw new Error("IPFS client is not initialized");
-    // }
-    // try {
-    //   const added = await ipfsClient.add(file, {
-    //     progress: (prog: any) => console.log(`received: ${prog}`),
-    //   });
-    //   console.log(added.path);
-    //   const url = `ipfs://${added.path}`;
-    //   setFileUrl(url);
-    // } catch (error) {
-    //   console.log("Error uploading file: ", error);
-    // }
   };
 
   const handleClose = () => {
@@ -82,13 +70,23 @@ const AddNFTForm = observer((props: NFTProps) => {
     }
 
     try {
+      nftsStore.isBusyMinting = true;
+
+      if (!file) {
+        throw new Error("File is not defined");
+      }
+
+      const added = await ipfsClient.add(file, {
+        progress: (prog: any) => console.log(`received: ${prog}`),
+      });
+      console.log(added.path);
+      // TODO: Store IPFS image here
+
       const newMetadata = {
         name,
         description,
-        image: fileUrl,
+        image: added.path,
       };
-
-      nftsStore.isBusyMinting = true;
 
       if (metadata) {
         const nftId = nftsStore.editNft?.id;
@@ -234,4 +232,4 @@ interface NFTProps {
   onAccept: () => void;
 }
 
-export default AddNFTForm;
+export default NFTForm;
