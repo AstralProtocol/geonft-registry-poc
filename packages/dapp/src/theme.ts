@@ -1,15 +1,15 @@
-import { createTheme } from '@mui/material/styles';
-import { red } from '@mui/material/colors';
+import { createTheme } from "@mui/material/styles";
+import { red } from "@mui/material/colors";
 
 // A custom theme for this app
 const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: "dark",
     primary: {
-      main: '#556cd6',
+      main: "#556cd6",
     },
     secondary: {
-      main: '#19857b',
+      main: "#19857b",
     },
     error: {
       main: red.A400,
@@ -18,9 +18,9 @@ const theme = createTheme({
 });
 
 theme.typography.h6 = {
-  fontSize: '.7rem',
-  '@media (min-width:600px)': {
-    fontSize: '.7rem',
+  fontSize: ".7rem",
+  "@media (min-width:600px)": {
+    fontSize: ".7rem",
   },
 };
 

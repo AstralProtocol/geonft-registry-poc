@@ -32,7 +32,7 @@ module.exports = {
     host: 'localhost',
     port: 8080,
     server: {
-      type: 'https',
+      type: 'http',
     },
   },
   devtool: "eval-cheap-source-map",

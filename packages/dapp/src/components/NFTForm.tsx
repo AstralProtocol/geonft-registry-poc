@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+import { observer } from "mobx-react-lite";
 import {
   Alert,
   Button,
@@ -9,23 +9,31 @@ import {
   DialogTitle,
   Grid,
   TextField,
+  Typography,
 } from "@mui/material";
-
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { selectWallet } from "../wallet/walletSlice";
-import { mint, selectNFTs } from "./nftsSlice";
 import { LoadingButton } from "@mui/lab";
+import { walletStore } from "../features/wallet/walletStore";
+import { docsStore } from "../features/docs/docsStore";
+import { nftsStore } from "../features/nfts/nftsStore";
 
-function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
-  const dispatch = useAppDispatch();
-
-  const { ipfsClient } = useAppSelector(selectWallet);
-  const { isBusyMinting } = useAppSelector(selectNFTs);
+const NFTForm = observer((props: NFTProps) => {
+  const { open, metadata, geojson, closeForm, onAccept } = props;
+  console.log("AddNFTForm metadata", metadata);
 
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
   const [description, setDescription] = useState(metadata?.description || "");
   const [fileUrl, setFileUrl] = useState(metadata?.image || "");
+  const [file, setFile] = useState<File | undefined>(undefined);
+
+  const { ipfsClient } = walletStore;
+  const { isBusyMinting } = nftsStore;
+
+  const imgSrc = file
+    ? URL.createObjectURL(file)
+    : `https://ipfs.io/ipfs/${fileUrl}`;
+
+  console.log("IMG SRC: ", imgSrc);
 
   useEffect(() => {
     if (metadata) {
@@ -35,7 +43,6 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
     }
   }, [metadata]);
 
-  console.log(name);
   const onNameChanged = (e: {
     target: { value: React.SetStateAction<string> };
   }) => setName(e.target.value);
@@ -45,23 +52,12 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
 
   const onFileLoadChange = async (e: any) => {
     const file = e.target.files[0];
-    if (ipfsClient == null) {
-      throw new Error("IPFS client is not initialized");
-    }
-    try {
-      const added = await ipfsClient.add(file, {
-        progress: (prog: any) => console.log(`received: ${prog}`),
-      });
-      console.log(added.path);
-      const url = `ipfs://${added.path}`;
-      setFileUrl(url);
-    } catch (error) {
-      console.log("Error uploading file: ", error);
-    }
+    setFile(file);
   };
 
   const handleClose = () => {
     closeForm();
+    nftsStore.editNft = null;
   };
 
   const handleSubmit = async () => {
@@ -74,26 +70,45 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
     }
 
     try {
+      nftsStore.isBusyMinting = true;
+
+      if (!file) {
+        throw new Error("File is not defined");
+      }
+
+      const added = await ipfsClient.add(file, {
+        progress: (prog: any) => console.log(`received: ${prog}`),
+      });
+      console.log(added.path);
+      // TODO: Store IPFS image here
+
       const newMetadata = {
         name,
         description,
-        image: fileUrl,
+        image: added.path,
       };
 
       if (metadata) {
-        // Update existing NFT
-      } else {
-        const metaRecv = await ipfsClient.add(JSON.stringify(newMetadata));
+        const nftId = nftsStore.editNft?.id;
 
-        await dispatch(
-          mint({ metadataURI: metaRecv.path, geojson: geojson })
-        ).unwrap();
+        if (!nftId && nftId !== 0) {
+          handleClose();
+          throw new Error("NFT ID is not defined");
+        }
+
+        await nftsStore.updateNftMetadata(nftId, newMetadata);
+      } else {
+        const metadataURI = await docsStore.writeDocument(newMetadata);
+        await nftsStore.mint({ metadataURI, geojson });
       }
+
+      nftsStore.isBusyMinting = false;
 
       setName("");
       setDescription("");
       setFileUrl("");
       setError("");
+      onAccept();
       handleClose();
     } catch (err: any) {
       setError(err.message);
@@ -114,23 +129,35 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
                 id="upload-file"
                 name="upload-file"
                 type="file"
+                accept="image/*"
                 onChange={onFileLoadChange}
               />
               <Button color="secondary" variant="contained" component="span">
                 Upload image
               </Button>
+              <Typography
+                component="span"
+                variant="body2"
+                color="textSecondary"
+                ml={2}
+              >
+                {file?.name || "No file selected"}
+              </Typography>
             </label>
             <div>
-              {fileUrl && (
+              {(fileUrl || file) && (
                 <img
+                  id="image-preview"
                   className="rounded mt-4"
                   alt="upload"
-                  width="350"
-                  style={{ marginTop: "10px" }}
-                  src={`${fileUrl.replace(
-                    "ipfs://",
-                    "https://ipfs.infura.io/ipfs/"
-                  )}`}
+                  style={{
+                    marginTop: "10px",
+                    width: "auto",
+                    height: "auto",
+                    maxWidth: "100%",
+                    maxHeight: "350px",
+                  }}
+                  src={imgSrc}
                 />
               )}
             </div>
@@ -189,7 +216,7 @@ function AddNFTForm({ open, metadata, geojson, closeForm }: NFTProps) {
       </Dialog>
     </div>
   );
-}
+});
 
 export interface Metadata {
   name: string;
@@ -202,6 +229,7 @@ interface NFTProps {
   metadata: Metadata | undefined;
   geojson?: string;
   closeForm: () => void;
+  onAccept: () => void;
 }
 
-export default AddNFTForm;
+export default NFTForm;
