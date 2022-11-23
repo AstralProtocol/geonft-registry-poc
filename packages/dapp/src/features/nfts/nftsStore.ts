@@ -1,12 +1,16 @@
 import { makeAutoObservable } from "mobx";
-import { ethers, BigNumber, Contract } from "ethers";
-import {
-  TransactionReceipt,
-  TransactionResponse,
-} from "@ethersproject/providers";
-import { walletStore } from "../wallet/walletStore";
+import { ethers, Contract } from "ethers";
 import networkMapping from "./../../deployments.json";
+import { walletStore } from "../wallet/walletStore";
 import { docsStore } from "../docs/docsStore";
+import {
+  NFT,
+  NFTMetadata,
+  getGeoNFTContract,
+  getGeoNFTsByOwner,
+  mintGeoNFT,
+  updateGeoNFTGeojson,
+} from "./nftsCore";
 
 class NFTsStore {
   nfts: NFT[] = [];
@@ -16,6 +20,7 @@ class NFTsStore {
   isBusyFetching = false;
 
   constructor() {
+    // This will make the whole class observable to any changes
     makeAutoObservable(this);
   }
 
@@ -24,51 +29,32 @@ class NFTsStore {
     this.isBusyFetching = true;
 
     try {
-      const { provider, address, ipfsClient } = walletStore;
+      const { provider, address } = walletStore;
+      const { ceramic } = docsStore;
       const web3Provider = new ethers.providers.Web3Provider(provider);
-      const nfts: NFT[] = [];
 
-      if (!web3Provider || !address || !ipfsClient) {
+      if (!web3Provider || !address) {
         throw new Error("Web3 provider not initialized");
       }
 
+      if (!ceramic) {
+        throw new Error("Ceramic not initialized");
+      }
+
       if (!this.geoNFTContract) {
-        this.geoNFTContract = await this.getGeoNFTContract(web3Provider);
+        this.geoNFTContract = await getGeoNFTContract(
+          web3Provider,
+          networkMapping
+        );
       }
 
       // Get a list of NFTs owned by the user
-      try {
-        const result = await this.geoNFTContract.getTokensByOwner(address);
-        const { 0: tokenIds, 1: metadataURIs, 2: geojsons } = result;
-        console.log(tokenIds);
-        console.log(metadataURIs);
-        console.log(geojsons);
-
-        if (ipfsClient === null) {
-          throw new Error("IPFS client not initialized");
-        }
-
-        // For each tokenId, push to the list of NFTs
-        for (let i = 0; i < tokenIds.length; i++) {
-          const metadataURI = metadataURIs[i];
-          // TODO: Load ceramic data in parallel
-          const metadata = await docsStore.readDocument(metadataURI);
-          const nftId = BigNumber.from(tokenIds[i]).toNumber();
-
-          nfts.push({
-            id: nftId,
-            metadata: metadata,
-            geojson: geojsons[i],
-          });
-
-          docsStore.nftDocuments[nftId] = metadataURI;
-        }
-
-        this.nfts = nfts;
-      } catch (error) {
-        console.log("Error fetching NFT list:", error);
-        throw error;
-      }
+      const nfts = await getGeoNFTsByOwner(
+        this.geoNFTContract,
+        address,
+        ceramic
+      );
+      this.nfts = nfts;
     } catch (error) {
       console.error(error);
     }
@@ -76,18 +62,12 @@ class NFTsStore {
     this.isBusyFetching = false;
   };
 
-  mint = async ({
-    metadataURI,
-    geojson,
-  }: {
-    metadataURI: string;
-    geojson: string;
-  }): Promise<void> => {
+  mint = async (metadataURI: string, geojson: string): Promise<void> => {
     console.log("minting");
+    this.isBusyMinting = true;
 
     try {
       const { address } = walletStore;
-      const newNFT = {} as NFT;
 
       if (!address) {
         throw new Error("Address not defined");
@@ -97,47 +77,27 @@ class NFTsStore {
         throw new Error("GeoNFT contract not initialized");
       }
 
-      try {
-        return await this.geoNFTContract
-          .safeMint(address, metadataURI, geojson)
-          .then(async (tx: TransactionResponse) => {
-            console.log("mint tx hash:", tx.hash);
-            console.log("mint tx:", tx);
-            const contractReceipt: TransactionReceipt = await tx.wait();
-            console.log("transaction receipt:", contractReceipt);
-
-            if (contractReceipt.status !== 1) {
-              throw new Error("Transaction failed");
-            }
-
-            console.log("mint tx success");
-            // get nft id from receipt
-            newNFT.id = BigNumber.from(
-              contractReceipt.logs[0].topics[3]
-            ).toNumber();
-            newNFT.geojson = geojson;
-
-            const metadata = await docsStore.readDocument(metadataURI);
-            newNFT.metadata = metadata;
-
-            this.nfts.push(newNFT);
-          });
-      } catch (error) {
-        console.log("Error minting:", error);
-        throw error;
-      }
+      const id = await mintGeoNFT(this.geoNFTContract, address, {
+        metadataURI,
+        geojson,
+      });
+      const metadata = await docsStore.readDocument(metadataURI);
+      const newNFT = {
+        id,
+        metadataURI,
+        metadata,
+        geojson,
+      };
+      this.nfts.push(newNFT);
     } catch (error) {
       console.error(error);
     }
   };
 
-  updateNftGeojson = async ({
-    tokenId,
-    geojson,
-  }: {
-    tokenId: number;
-    geojson: string;
-  }): Promise<boolean> => {
+  updateNftGeojson = async (
+    nftId: number,
+    geojson: string
+  ): Promise<boolean> => {
     const { address } = walletStore;
 
     if (!address) {
@@ -148,81 +108,37 @@ class NFTsStore {
       throw new Error("GeoNFT contract not initialized");
     }
 
-    return await this.geoNFTContract
-      .setGeoJson(tokenId, geojson)
-      .then(async (tx: TransactionResponse) => {
-        console.log("update geojson tx hash:", tx.hash);
-        console.log("update geojson tx:", tx);
-        const contractReceipt: TransactionReceipt = await tx.wait();
-        console.log("transaction receipt:", contractReceipt);
+    try {
+      await updateGeoNFTGeojson(this.geoNFTContract, nftId, geojson);
 
-        if (contractReceipt.status !== 1) {
-          throw new Error("Transaction failed");
-        }
+      console.log("update geojson tx success");
+      // get nft id from receipt
+      const updatedNft = this.nfts.find((nft) => nft.id === nftId);
 
-        console.log("update geojson tx success");
-        // get nft id from receipt
-        const updatedNft = this.nfts.find((nft) => nft.id === tokenId);
-
-        if (updatedNft) {
-          updatedNft.geojson = geojson;
-          console.log("updateNft", updatedNft);
-          return true;
-        }
-
-        return false;
-      });
+      if (updatedNft) {
+        // TODO: Get updated geojson from contract and use its geojson
+        updatedNft.geojson = geojson;
+        return true;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    return false;
   };
 
   updateNftMetadata = async (
-    nftId: number,
+    docId: string,
     metadata: NFTMetadata
   ): Promise<void> => {
-    await docsStore.updateDocument(nftId, metadata);
+    await docsStore.updateDocument(docId, metadata);
+    // Update store nft with the new metadata
     this.nfts = this.nfts.map((nft) => {
-      if (nft.id === nftId) {
+      if (nft.metadataURI === docId) {
         return { ...nft, metadata };
       }
       return nft;
     });
   };
-
-  private getGeoNFTContract = async (
-    provider: ethers.providers.Web3Provider
-  ): Promise<Contract> => {
-    const signer = provider.getSigner();
-    const chainId: number = await (await provider.getNetwork()).chainId;
-    const chainIdStr: string = chainId.toString();
-    console.log(`Connected on chain ${chainId}`);
-
-    const networkMappingForChain =
-      networkMapping[chainIdStr as keyof typeof networkMapping];
-
-    if (networkMappingForChain === undefined) {
-      throw new Error("No network mapping found");
-    }
-
-    const geoNFTMapping = networkMappingForChain[0]["contracts"]["GeoNFT"];
-    const geoNFTContract = new Contract(
-      geoNFTMapping.address,
-      geoNFTMapping.abi,
-      signer
-    );
-
-    return geoNFTContract;
-  };
-}
-
-export interface NFTMetadata {
-  name: string;
-  description: string;
-  image: string;
-}
-
-export interface NFT {
-  id: number;
-  geojson: string;
-  metadata: NFTMetadata;
 }
 
 export const nftsStore = new NFTsStore();

@@ -4,7 +4,7 @@ import ThreeIdResolver from "@ceramicnetwork/3id-did-resolver";
 import { EthereumAuthProvider, ThreeIdConnect } from "@3id/connect";
 import { DID } from "dids";
 
-// DocumentContent is a generic type that can be used to define the content of a document
+// DocumentContent is a generic type that can be passed to define the content of a document
 // In this context, it would be the NFTMetadata type passed on function execution
 export const readCeramicDocument = async <DocumentContent>(
   ceramic: CeramicClient,

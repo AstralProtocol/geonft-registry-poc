@@ -1,7 +1,7 @@
 import { makeAutoObservable } from "mobx";
 import { CeramicClient } from "@ceramicnetwork/http-client";
 import { walletStore } from "../wallet/walletStore";
-import { NFTMetadata } from "../nfts/nftsStore";
+import { NFTMetadata } from "../nfts/nftsCore";
 import {
   createCeramicClient,
   readCeramicDocument,
@@ -11,7 +11,6 @@ import {
 
 class DocsStore {
   ceramic: CeramicClient | null = null;
-  nftDocuments: Record<number, string> = {};
 
   constructor() {
     // This will make the whole class observable to any changes
@@ -57,12 +56,10 @@ class DocsStore {
   };
 
   updateDocument = async (
-    nftId: number,
+    docId: string,
     metadata: NFTMetadata
   ): Promise<void> => {
     try {
-      const docId = this.nftDocuments[nftId];
-
       if (!docId) {
         throw new Error("Document not found");
       }
