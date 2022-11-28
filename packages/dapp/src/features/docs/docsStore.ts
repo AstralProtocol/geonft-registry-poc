@@ -79,7 +79,7 @@ class DocsStore {
     }
   };
 
-  private createCeramicClient = async (): Promise<CeramicClient> => {
+  createCeramicClient = async (): Promise<CeramicClient> => {
     try {
       const { provider, address } = walletStore;
 

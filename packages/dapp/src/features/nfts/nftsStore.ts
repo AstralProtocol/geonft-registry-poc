@@ -30,7 +30,7 @@ class NFTsStore {
 
     try {
       const { provider, address } = walletStore;
-      const { ceramic } = docsStore;
+      let { ceramic } = docsStore;
       const web3Provider = new ethers.providers.Web3Provider(provider);
 
       if (!web3Provider || !address) {
@@ -38,7 +38,9 @@ class NFTsStore {
       }
 
       if (!ceramic) {
-        throw new Error("Ceramic not initialized");
+        // throw new Error("Ceramic not initialized");
+        ceramic = await docsStore.createCeramicClient();
+        docsStore.ceramic = ceramic;
       }
 
       if (!this.geoNFTContract) {
