@@ -33,8 +33,6 @@ const NFTForm = observer((props: NFTProps) => {
     ? URL.createObjectURL(file)
     : `https://ipfs.io/ipfs/${fileUrl}`;
 
-  console.log("IMG SRC: ", imgSrc);
-
   useEffect(() => {
     if (metadata) {
       setName(metadata.name);
@@ -43,16 +41,19 @@ const NFTForm = observer((props: NFTProps) => {
     }
   }, [metadata]);
 
-  const onNameChanged = (e: {
-    target: { value: React.SetStateAction<string> };
-  }) => setName(e.target.value);
-  const onDescriptionChanged = (e: {
-    target: { value: React.SetStateAction<string> };
-  }) => setDescription(e.target.value);
+  const onNameChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  };
 
-  const onFileLoadChange = async (e: any) => {
-    const file = e.target.files[0];
-    setFile(file);
+  const onDescriptionChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDescription(e.target.value);
+  };
+
+  const onFileLoadChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFile(file);
+    }
   };
 
   const handleClose = () => {
@@ -61,58 +62,77 @@ const NFTForm = observer((props: NFTProps) => {
   };
 
   const handleSubmit = async () => {
-    if (ipfsClient == null) {
-      throw new Error("IPFS client is not initialized");
+    nftsStore.isBusyMinting = true;
+    try {
+      metadata ? await updateNft() : await createNft();
+    } catch (err) {
+      err instanceof Error
+        ? setError(err.message)
+        : setError("Unknown error occurred");
+
+      console.error(err);
     }
 
+    setName("");
+    setDescription("");
+    setFileUrl("");
+    setError("");
+    onAccept();
+    handleClose();
+    nftsStore.isBusyMinting = false;
+  };
+
+  const createNft = async () => {
     if (!geojson) {
       throw new Error("GeoJSON is not defined");
     }
 
-    try {
-      nftsStore.isBusyMinting = true;
-
-      if (!file) {
-        throw new Error("File is not defined");
-      }
-
-      const added = await ipfsClient.add(file, {
-        progress: (prog: any) => console.log(`received: ${prog}`),
-      });
-      console.log(added.path);
-      // TODO: Store IPFS image here
-
-      const newMetadata = {
-        name,
-        description,
-        image: added.path,
-      };
-
-      if (metadata) {
-        const docId = nftsStore.editNft?.metadataURI;
-
-        if (!docId) {
-          handleClose();
-          throw new Error("NFT ID is not defined");
-        }
-
-        await nftsStore.updateNftMetadata(docId, newMetadata);
-      } else {
-        const metadataURI = await docsStore.writeDocument(newMetadata);
-        await nftsStore.mint(metadataURI, geojson);
-      }
-
-      nftsStore.isBusyMinting = false;
-
-      setName("");
-      setDescription("");
-      setFileUrl("");
-      setError("");
-      onAccept();
-      handleClose();
-    } catch (err: any) {
-      setError(err.message);
+    if (!ipfsClient) {
+      throw new Error("IPFS client is not defined");
     }
+
+    const image = file ? await storeImageOnIpfs(file) : "";
+    const newMetadata = {
+      name,
+      description,
+      image,
+    };
+
+    const metadataURI = await docsStore.writeDocument(newMetadata);
+    await nftsStore.mint(metadataURI, geojson);
+  };
+
+  const updateNft = async () => {
+    if (!ipfsClient) {
+      throw new Error("IPFS client is not defined");
+    }
+
+    const image = file ? await storeImageOnIpfs(file) : "";
+    const newMetadata = {
+      name,
+      description,
+      image,
+    };
+
+    const docId = nftsStore.editNft?.metadataURI;
+
+    if (!docId) {
+      throw new Error("NFT ID is not defined");
+    }
+
+    await nftsStore.updateNftMetadata(docId, newMetadata);
+  };
+
+  const storeImageOnIpfs = async (file: File): Promise<string> => {
+    if (!ipfsClient) {
+      throw new Error("IPFS client is not defined");
+    }
+
+    const added = await ipfsClient.add(file, {
+      progress: (prog: any) => console.log(`received: ${prog}`),
+    });
+    const IpfsImagePath = added.path;
+    return IpfsImagePath;
   };
 
   return (
@@ -130,7 +150,7 @@ const NFTForm = observer((props: NFTProps) => {
                 name="upload-file"
                 type="file"
                 accept="image/*"
-                onChange={onFileLoadChange}
+                onChange={onFileLoadChanged}
               />
               <Button color="secondary" variant="contained" component="span">
                 Upload image

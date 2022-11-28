@@ -231,6 +231,9 @@ const MapWrapper = observer((): JSX.Element => {
       return;
     }
 
+    // console.log("SELECTED FEATURE", selectedFeature);
+    // console.log("FEATURE PROPS: ", selectedFeature.getProperties());
+    // TODO: Fix this. The created feature lacks the id and properties until full refresh
     const nftId = selectedFeature.getId() as number;
     if (!nftId && nftId !== 0) {
       throw new Error("NFT ID is not defined");
