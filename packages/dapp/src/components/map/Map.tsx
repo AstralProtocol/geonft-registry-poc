@@ -205,10 +205,7 @@ const MapWrapper = observer((): JSX.Element => {
       _convertPolygonFeaturesToMultiPolygonFeature(modifiedFeaturesPolygon);
     const nftId = selectedFeature.getId() as number;
     const newGeojson = new GeoJSON().writeFeature(modifiedFeatureMultiPolygon);
-    const success = await nftsStore.updateNftGeojson({
-      tokenId: nftId,
-      geojson: newGeojson,
-    });
+    const success = await nftsStore.updateNftGeojson(nftId, newGeojson);
 
     if (success) {
       geoNftsLayer.getSource()?.addFeature(modifiedFeatureMultiPolygon);

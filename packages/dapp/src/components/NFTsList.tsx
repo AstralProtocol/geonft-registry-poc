@@ -8,7 +8,8 @@ import {
   ListItemText,
   CircularProgress,
 } from "@mui/material";
-import { nftsStore, NFT } from "../features/nfts/nftsStore";
+import { NFT } from "../features/nfts/nftsCore";
+import { nftsStore } from "../features/nfts/nftsStore";
 
 export const NFTsList = observer((): JSX.Element => {
   const nfts = nftsStore.nfts;

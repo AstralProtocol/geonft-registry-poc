@@ -89,17 +89,17 @@ const NFTForm = observer((props: NFTProps) => {
       };
 
       if (metadata) {
-        const nftId = nftsStore.editNft?.id;
+        const docId = nftsStore.editNft?.metadataURI;
 
-        if (!nftId && nftId !== 0) {
+        if (!docId) {
           handleClose();
           throw new Error("NFT ID is not defined");
         }
 
-        await nftsStore.updateNftMetadata(nftId, newMetadata);
+        await nftsStore.updateNftMetadata(docId, newMetadata);
       } else {
         const metadataURI = await docsStore.writeDocument(newMetadata);
-        await nftsStore.mint({ metadataURI, geojson });
+        await nftsStore.mint(metadataURI, geojson);
       }
 
       nftsStore.isBusyMinting = false;
