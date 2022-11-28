@@ -1,15 +1,15 @@
 import { makeAutoObservable } from "mobx";
 import { CeramicClient } from "@ceramicnetwork/http-client";
-import { useStore } from "./root.store";
-import { NFTMetadata } from "../features/nfts/nftsCore";
+import { walletStore } from "../wallet/walletStore";
+import { NFTMetadata } from "../nfts/nftsCore";
 import {
   createCeramicClient,
   readCeramicDocument,
   writeCeramicDocument,
   updateCeramicDocument,
-} from "../features/docs/docsCore";
+} from "./docsCore";
 
-export class DocsStore {
+class DocsStore {
   ceramic: CeramicClient | null = null;
 
   constructor() {
@@ -79,9 +79,8 @@ export class DocsStore {
     }
   };
 
-  createCeramicClient = async (): Promise<CeramicClient> => {
+  private createCeramicClient = async (): Promise<CeramicClient> => {
     try {
-      const { walletStore } = useStore();
       const { provider, address } = walletStore;
 
       if (!provider || !address) {
@@ -96,3 +95,5 @@ export class DocsStore {
     }
   };
 }
+
+export const docsStore = new DocsStore();

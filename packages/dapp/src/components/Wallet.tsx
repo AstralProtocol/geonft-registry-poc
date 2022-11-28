@@ -1,10 +1,9 @@
 import { Box } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { WalletStatusEnums } from "../store/wallet.store";
-import { useStore } from "../store";
+import { walletStore, WalletStatusEnums } from "../features/wallet/walletStore";
+import { nftsStore } from "../features/nfts/nftsStore";
 
 const Wallet = () => {
-  const { walletStore, nftsStore } = useStore();
   const connected = walletStore.status === WalletStatusEnums.CONNECTED;
 
   const connectWallet = async () => {

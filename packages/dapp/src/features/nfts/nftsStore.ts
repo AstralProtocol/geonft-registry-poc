@@ -1,8 +1,8 @@
 import { makeAutoObservable } from "mobx";
 import { ethers, Contract } from "ethers";
-import { create as createIpfsClient, IPFSHTTPClient } from "ipfs-http-client";
-import networkMapping from "../deployments.json";
-import { useStore } from "./root.store";
+import networkMapping from "./../../deployments.json";
+import { walletStore } from "../wallet/walletStore";
+import { docsStore } from "../docs/docsStore";
 import {
   NFT,
   NFTMetadata,
@@ -10,12 +10,11 @@ import {
   getGeoNFTsByOwner,
   mintGeoNFT,
   updateGeoNFTGeojson,
-} from "../features/nfts/nftsCore";
+} from "./nftsCore";
 
-export class NFTsStore {
+class NFTsStore {
   nfts: NFT[] = [];
   geoNFTContract: Contract | null = null;
-  ipfsClient: IPFSHTTPClient;
   editNft: NFT | null = null;
   isBusyMinting = false;
   isBusyFetching = false;
@@ -23,7 +22,6 @@ export class NFTsStore {
   constructor() {
     // This will make the whole class observable to any changes
     makeAutoObservable(this);
-    this.ipfsClient = createIpfsClient(ipfsOptions);
   }
 
   fetchNFTs = async (): Promise<void> => {
@@ -31,9 +29,8 @@ export class NFTsStore {
     this.isBusyFetching = true;
 
     try {
-      const { walletStore, docsStore } = useStore();
       const { provider, address } = walletStore;
-      let { ceramic } = docsStore;
+      const { ceramic } = docsStore;
       const web3Provider = new ethers.providers.Web3Provider(provider);
 
       if (!web3Provider || !address) {
@@ -41,8 +38,7 @@ export class NFTsStore {
       }
 
       if (!ceramic) {
-        ceramic = await docsStore.createCeramicClient();
-        docsStore.ceramic = ceramic;
+        throw new Error("Ceramic not initialized");
       }
 
       if (!this.geoNFTContract) {
@@ -71,7 +67,6 @@ export class NFTsStore {
     this.isBusyMinting = true;
 
     try {
-      const { walletStore, docsStore } = useStore();
       const { address } = walletStore;
 
       if (!address) {
@@ -103,7 +98,6 @@ export class NFTsStore {
     nftId: number,
     geojson: string
   ): Promise<boolean> => {
-    const { walletStore } = useStore();
     const { address } = walletStore;
 
     if (!address) {
@@ -136,7 +130,6 @@ export class NFTsStore {
     docId: string,
     metadata: NFTMetadata
   ): Promise<void> => {
-    const { docsStore } = useStore();
     await docsStore.updateDocument(docId, metadata);
     // Update store nft with the new metadata
     this.nfts = this.nfts.map((nft) => {
@@ -148,18 +141,4 @@ export class NFTsStore {
   };
 }
 
-const ipfsOptions = {
-  host: "ipfs.infura.io",
-  port: 5001,
-  protocol: "https",
-  apiPath: "/api/v0",
-  headers: {
-    authorization:
-      "Basic " +
-      Buffer.from(
-        process.env.REACT_APP_PROJECT_ID +
-          ":" +
-          process.env.REACT_APP_PROJECT_SECRET
-      ).toString("base64"),
-  },
-};
+export const nftsStore = new NFTsStore();

@@ -12,7 +12,9 @@ import {
   Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { useStore } from "../store";
+import { walletStore } from "../features/wallet/walletStore";
+import { docsStore } from "../features/docs/docsStore";
+import { nftsStore } from "../features/nfts/nftsStore";
 
 const NFTForm = observer((props: NFTProps) => {
   const { open, metadata, geojson, closeForm, onAccept } = props;
@@ -24,8 +26,8 @@ const NFTForm = observer((props: NFTProps) => {
   const [fileUrl, setFileUrl] = useState(metadata?.image || "");
   const [file, setFile] = useState<File | undefined>(undefined);
 
-  const { nftsStore, docsStore } = useStore();
-  const { ipfsClient, isBusyMinting } = nftsStore;
+  const { ipfsClient } = walletStore;
+  const { isBusyMinting } = nftsStore;
 
   const imgSrc = file
     ? URL.createObjectURL(file)
@@ -78,6 +80,7 @@ const NFTForm = observer((props: NFTProps) => {
         progress: (prog: any) => console.log(`received: ${prog}`),
       });
       console.log(added.path);
+      // TODO: Store IPFS image here
 
       const newMetadata = {
         name,
@@ -86,17 +89,17 @@ const NFTForm = observer((props: NFTProps) => {
       };
 
       if (metadata) {
-        const docId = nftsStore.editNft?.metadataURI;
+        const nftId = nftsStore.editNft?.id;
 
-        if (!docId) {
+        if (!nftId && nftId !== 0) {
           handleClose();
-          throw new Error("Document ID is not defined");
+          throw new Error("NFT ID is not defined");
         }
 
-        await nftsStore.updateNftMetadata(docId, newMetadata);
+        await nftsStore.updateNftMetadata(nftId, newMetadata);
       } else {
         const metadataURI = await docsStore.writeDocument(newMetadata);
-        await nftsStore.mint(metadataURI, geojson);
+        await nftsStore.mint({ metadataURI, geojson });
       }
 
       nftsStore.isBusyMinting = false;
