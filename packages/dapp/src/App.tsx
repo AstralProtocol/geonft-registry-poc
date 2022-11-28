@@ -4,78 +4,13 @@ import { Container, CssBaseline, Box, Grid, Typography } from "@mui/material";
 // import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import theme from "./theme";
 import Wallet from "./components/Wallet";
-import { walletStore, WalletStatusEnums } from "./features/wallet/walletStore";
+import { WalletStatusEnums } from "./store/wallet.store";
+import { useStore } from "./store";
 import { NFTsList } from "./components/NFTsList";
 import Map from "./components/map/Map";
 
-// function Footer() {
-//   const { status } = appStore.wallet;
-
-//   useEffect(() => {
-//     if (status === WalletStatusEnums.CONNECTED) {
-//       console.log("Wallet connected");
-//     }
-//   }, [status]);
-
-//   const connected = status === WalletStatusEnums.CONNECTED;
-//   return (
-//     <Typography
-//       component={"div"}
-//       variant="body2"
-//       color="text.secondary"
-//       align="center"
-//       gutterBottom
-//     >
-//       <Grid container rowSpacing={1} columnSpacing={3}>
-//         {!connected && (
-//           <Grid item xs={12}>
-//             Status: {WalletStatusEnums[status]}
-//           </Grid>
-//         )}
-//         {/* {ceramic && (
-//           <Grid item xs={12} mb={1}>
-//             {ceramic.did?.id}
-//           </Grid>
-//         )} */}
-//         {connected && (
-//           <Grid
-//             container
-//             direction="row"
-//             justifyContent="center"
-//             alignItems="center"
-//           >
-//             <Grid item xs={1}>
-//               <AccountBalanceWalletIcon />
-//             </Grid>
-//             {/* <Grid item xs={5}>
-//               {formattedBalance} CELO
-//             </Grid> */}
-//             {/* <Grid item xs={5}>
-//               <Button
-//                 variant="contained"
-//                 onClick={() => dispatch(disconnect())}
-//               >
-//                 Disconnect
-//               </Button>
-//             </Grid> */}
-//           </Grid>
-//         )}
-//         {connected && (
-//           <Grid>
-//             <Grid item xs={12}>
-//               {/* {address} */}
-//             </Grid>
-//             <Grid item xs={12}>
-//               {/* Block Number: {blockNumber} */}
-//             </Grid>
-//           </Grid>
-//         )}
-//       </Grid>
-//     </Typography>
-//   );
-// }
-
 const App = observer(() => {
+  const { walletStore } = useStore();
   const connected = walletStore.status === WalletStatusEnums.CONNECTED;
 
   return (

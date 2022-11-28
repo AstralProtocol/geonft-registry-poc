@@ -18,7 +18,7 @@ import {
   geoNftsLayer,
 } from "./OpenLayersVariables";
 import NFTForm, { Metadata } from "../NFTForm";
-import { nftsStore } from "../../features/nfts/nftsStore";
+import { useStore } from "../../store";
 import { MapBrowserEvent } from "ol";
 
 enum Status {
@@ -37,6 +37,7 @@ enum EditionStatus {
 let isDeleteFeatureActive = false;
 
 const MapWrapper = observer((): JSX.Element => {
+  const { nftsStore } = useStore();
   const { nfts } = nftsStore;
   console.log("MAP NFTS: ", toJS(nfts));
 
@@ -205,10 +206,7 @@ const MapWrapper = observer((): JSX.Element => {
       _convertPolygonFeaturesToMultiPolygonFeature(modifiedFeaturesPolygon);
     const nftId = selectedFeature.getId() as number;
     const newGeojson = new GeoJSON().writeFeature(modifiedFeatureMultiPolygon);
-    const success = await nftsStore.updateNftGeojson({
-      tokenId: nftId,
-      geojson: newGeojson,
-    });
+    const success = await nftsStore.updateNftGeojson(nftId, newGeojson);
 
     if (success) {
       geoNftsLayer.getSource()?.addFeature(modifiedFeatureMultiPolygon);
