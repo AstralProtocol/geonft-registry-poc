@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { NFT } from "../features/nfts/nftsCore";
 import { useNftsStore } from "../features/nfts/nftsStore";
+import { Loading } from "./Loading";
 
 export const NFTsList = observer((): JSX.Element => {
   const nftsStore = useNftsStore();
@@ -17,7 +18,7 @@ export const NFTsList = observer((): JSX.Element => {
 
   const renderContent = (): JSX.Element => {
     if (nftsStore.isBusyFetching) {
-      return <NFTsLoaderDisplay />;
+      return <Loading>Loading NFTs...</Loading>;
     }
 
     if (nfts.length === 0) {
@@ -71,24 +72,6 @@ interface NFTsProps {
   nfts: NFT[];
   editMetadata: (nftId: number) => void;
 }
-
-const NFTsLoaderDisplay = (): JSX.Element => (
-  <Box
-    width="100%"
-    height="100%"
-    display="flex"
-    flexDirection="column"
-    justifyContent="center"
-    alignItems="center"
-  >
-    <Typography variant="h5" color="white">
-      Fetching NFTs...
-    </Typography>
-    <Box mt={2} color="white">
-      <CircularProgress color="inherit" />
-    </Box>
-  </Box>
-);
 
 const NoNFTsFound = (): JSX.Element => (
   <Typography textAlign="center">No NFTs found</Typography>

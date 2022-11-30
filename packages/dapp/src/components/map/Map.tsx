@@ -8,7 +8,10 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { Polygon, MultiPolygon } from "ol/geom";
 import GeoJSON from "ol/format/GeoJSON";
-import "ol/ol.css";
+import MapBrowserEvent from "ol/MapBrowserEvent";
+import NFTForm, { Metadata } from "../NFTForm";
+import { useNftsStore } from "../../features/nfts/nftsStore";
+import { Loading } from "../Loading";
 import {
   initMap,
   select,
@@ -17,9 +20,7 @@ import {
   editLayer,
   geoNftsLayer,
 } from "./OpenLayersVariables";
-import NFTForm, { Metadata } from "../NFTForm";
-import { useNftsStore } from "../../features/nfts/nftsStore";
-import { MapBrowserEvent } from "ol";
+import "ol/ol.css";
 
 enum Status {
   IDLE,
@@ -316,7 +317,7 @@ const MapWrapper = observer((): JSX.Element => {
   return (
     <Box position="relative">
       <Box id="map" width="100%" height="400px">
-        {nftsStore.isBusyFetching && <NFTsLoaderDisplay />}
+        {nftsStore.isBusyFetching && <Loading>Loading NFTs...</Loading>}
       </Box>
       <Box
         position="absolute"
@@ -413,28 +414,5 @@ const MapWrapper = observer((): JSX.Element => {
     </Box>
   );
 });
-
-const NFTsLoaderDisplay = (): JSX.Element => (
-  <Box
-    width="100%"
-    height="100%"
-    position="absolute"
-    top={0}
-    left={0}
-    display="flex"
-    flexDirection="column"
-    justifyContent="center"
-    alignItems="center"
-    bgcolor="rgba(0, 0, 0, 0.5)"
-    zIndex={9999}
-  >
-    <Typography variant="h5" color="white">
-      Fetching NFTs...
-    </Typography>
-    <Box mt={2} color="white">
-      <CircularProgress color="inherit" />
-    </Box>
-  </Box>
-);
 
 export default MapWrapper;

@@ -18,6 +18,7 @@ import { getGeoNFTContract } from "./features/nfts/nftsCore";
 import { createCeramicClient } from "./features/docs/docsCore";
 import { NFTsList } from "./components/NFTsList";
 import Map from "./components/map/Map";
+import { Loading } from "./components/Loading";
 
 const App = () => {
   const walletStore = new WalletStore();
@@ -67,7 +68,6 @@ const Body = observer((): JSX.Element => {
     if (!connected || !address) return;
 
     setLoadingStatus("content");
-    console.log("Fetching store data");
     const [ceramic, nftContract] = await Promise.all([
       createCeramicClient(provider, address),
       getGeoNFTContract(provider),
@@ -90,6 +90,10 @@ const Body = observer((): JSX.Element => {
     if (status === WalletStatusEnums.LOADING) {
       setLoadingStatus("wallet");
     }
+
+    if (status === WalletStatusEnums.DISCONNECTED) {
+      setLoadingStatus("idle");
+    }
   }, [status]);
 
   if (loadingStatus === "wallet" || loadingStatus === "content") {
@@ -97,7 +101,7 @@ const Body = observer((): JSX.Element => {
       loadingStatus === "wallet"
         ? "Connecting wallet..."
         : "Loading content...";
-    return <Typography>{msg}</Typography>;
+    return <Loading>{msg}</Loading>;
   }
 
   if (!address || !ceramic || !nftContract) {
@@ -114,7 +118,6 @@ const Body = observer((): JSX.Element => {
     );
   }
 
-  console.log("Initializing NFTs store");
   const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
 
   nftsStore.fetchNFTs();
@@ -122,7 +125,9 @@ const Body = observer((): JSX.Element => {
   return (
     <NftsStoreContext.Provider value={nftsStore}>
       <Box display="flex" gap={4}>
-        <Box flexGrow={1}>{/* <Map /> */}</Box>
+        <Box flexGrow={1}>
+          <Map />
+        </Box>
         <Box width="400px">
           <NFTsList />
         </Box>
