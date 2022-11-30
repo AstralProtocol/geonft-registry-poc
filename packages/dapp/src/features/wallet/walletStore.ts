@@ -1,10 +1,11 @@
+import { createContext, useContext } from "react";
 import { makeAutoObservable } from "mobx";
 import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { create, IPFSHTTPClient } from "ipfs-http-client";
 
-class WalletStore {
+export class WalletStore {
   address: string | null = null;
   balance: string | null = null;
   status: WalletStatusEnums = WalletStatusEnums.DISCONNECTED;
@@ -118,5 +119,14 @@ export enum WalletStatusEnums {
   CONNECTED,
   WRONG_NETWORK,
 }
+
+export const WalletStoreContext = createContext<WalletStore | null>(null);
+export const useWalletStore = (): WalletStore => {
+  const store = useContext(WalletStoreContext);
+  if (!store) {
+    throw new Error("Wallet store must be used within a WalletStoreProvider");
+  }
+  return store;
+};
 
 export const walletStore = new WalletStore();

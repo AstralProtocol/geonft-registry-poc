@@ -14,11 +14,12 @@ import {
 import { LoadingButton } from "@mui/lab";
 import { walletStore } from "../features/wallet/walletStore";
 import { docsStore } from "../features/docs/docsStore";
-import { nftsStore } from "../features/nfts/nftsStore";
+import { useNftsStore } from "../features/nfts/nftsStore";
 
 const NFTForm = observer((props: NFTProps) => {
   const { open, metadata, geojson, closeForm, onAccept } = props;
   console.log("AddNFTForm metadata", metadata);
+  const nftsStore = useNftsStore();
 
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");

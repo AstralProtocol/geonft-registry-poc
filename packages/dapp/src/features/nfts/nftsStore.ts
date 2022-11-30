@@ -1,27 +1,36 @@
+import { createContext, useContext } from "react";
 import { makeAutoObservable } from "mobx";
 import { ethers, Contract } from "ethers";
-import networkMapping from "./../../deployments.json";
-import { walletStore } from "../wallet/walletStore";
+import { CeramicClient } from "@ceramicnetwork/http-client";
+import { walletStore, WalletStore } from "../wallet/walletStore";
 import { docsStore } from "../docs/docsStore";
 import {
   NFT,
   NFTMetadata,
-  getGeoNFTContract,
   getGeoNFTsByOwner,
   mintGeoNFT,
   updateGeoNFTGeojson,
 } from "./nftsCore";
 
-class NFTsStore {
+export class NFTsStore {
+  walletStore: WalletStore;
   nfts: NFT[] = [];
-  geoNFTContract: Contract | null = null;
+  nftContract: Contract;
+  ceramic: CeramicClient;
   editNft: NFT | null = null;
   isBusyMinting = false;
   isBusyFetching = false;
 
-  constructor() {
+  constructor(
+    walletStore: WalletStore,
+    nftContract: Contract,
+    ceramic: CeramicClient
+  ) {
     // This will make the whole class observable to any changes
     makeAutoObservable(this);
+    this.walletStore = walletStore;
+    this.nftContract = nftContract;
+    this.ceramic = ceramic;
   }
 
   fetchNFTs = async (): Promise<void> => {
@@ -29,32 +38,20 @@ class NFTsStore {
     this.isBusyFetching = true;
 
     try {
-      const { provider, address } = walletStore;
-      let { ceramic } = docsStore;
+      const { provider, address } = this.walletStore;
+      console.log("provider", provider);
       const web3Provider = new ethers.providers.Web3Provider(provider);
 
       if (!web3Provider || !address) {
         throw new Error("Web3 provider not initialized");
       }
 
-      if (!ceramic) {
-        // throw new Error("Ceramic not initialized");
-        ceramic = await docsStore.createCeramicClient();
-        docsStore.ceramic = ceramic;
-      }
-
-      if (!this.geoNFTContract) {
-        this.geoNFTContract = await getGeoNFTContract(
-          web3Provider,
-          networkMapping
-        );
-      }
-
       // Get a list of NFTs owned by the user
+      console.log("Getting NFTs");
       const nfts = await getGeoNFTsByOwner(
-        this.geoNFTContract,
+        this.nftContract,
         address,
-        ceramic
+        this.ceramic
       );
       this.nfts = nfts;
     } catch (error) {
@@ -69,17 +66,17 @@ class NFTsStore {
     this.isBusyMinting = true;
 
     try {
-      const { address } = walletStore;
+      const { address } = this.walletStore;
 
       if (!address) {
         throw new Error("Address not defined");
       }
 
-      if (!this.geoNFTContract) {
+      if (!this.nftContract) {
         throw new Error("GeoNFT contract not initialized");
       }
 
-      const id = await mintGeoNFT(this.geoNFTContract, address, {
+      const id = await mintGeoNFT(this.nftContract, address, {
         metadataURI,
         geojson,
       });
@@ -100,18 +97,18 @@ class NFTsStore {
     nftId: number,
     geojson: string
   ): Promise<boolean> => {
-    const { address } = walletStore;
+    const { address } = this.walletStore;
 
     if (!address) {
       throw new Error("Address not defined");
     }
 
-    if (!this.geoNFTContract) {
+    if (!this.nftContract) {
       throw new Error("GeoNFT contract not initialized");
     }
 
     try {
-      await updateGeoNFTGeojson(this.geoNFTContract, nftId, geojson);
+      await updateGeoNFTGeojson(this.nftContract, nftId, geojson);
 
       console.log("update geojson tx success");
       // get nft id from receipt
@@ -143,4 +140,11 @@ class NFTsStore {
   };
 }
 
-export const nftsStore = new NFTsStore();
+export const NftsStoreContext = createContext<NFTsStore | null>(null);
+export const useNftsStore = (): NFTsStore => {
+  const store = useContext(NftsStoreContext);
+  if (!store) {
+    throw new Error("NFTs store must be used within a WalletStoreProvider");
+  }
+  return store;
+};

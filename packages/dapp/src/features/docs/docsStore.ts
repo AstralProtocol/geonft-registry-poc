@@ -81,7 +81,7 @@ class DocsStore {
 
   createCeramicClient = async (): Promise<CeramicClient> => {
     try {
-      const { provider, address } = walletStore;
+      const { provider: provider, address } = walletStore;
 
       if (!provider || !address) {
         throw new Error("Wallet not connected");

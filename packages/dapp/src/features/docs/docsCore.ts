@@ -10,7 +10,9 @@ export const readCeramicDocument = async <DocumentContent>(
   ceramic: CeramicClient,
   docId: string
 ): Promise<DocumentContent> => {
+  console.log("Reading document", docId);
   const doc = await TileDocument.load(ceramic, docId);
+  console.log("DOC: ", doc);
   return doc.content as DocumentContent;
 };
 
@@ -40,13 +42,14 @@ export const updateCeramicDocument = async <DocumentContent>(
 };
 
 export const createCeramicClient = async (
-  address: string,
-  provider: any
+  provider: any,
+  address: string
 ): Promise<CeramicClient> => {
   if (!provider || !address) {
     throw new Error("Wallet or provider not found");
   }
 
+  console.log("PROVIDER: ", provider);
   const authProvider = new EthereumAuthProvider(provider, address);
   const threeIdConnect = new ThreeIdConnect();
   console.log("connecting to 3id");

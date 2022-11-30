@@ -2,6 +2,7 @@ import { ethers, BigNumber, Contract } from "ethers";
 import { TransactionReceipt } from "@ethersproject/providers";
 import { CeramicClient } from "@ceramicnetwork/http-client";
 import { readCeramicDocument } from "../docs/docsCore";
+import networkMapping from "../../deployments.json";
 
 // TODO: Create NFTId type
 export interface NFT {
@@ -33,6 +34,7 @@ export const getGeoNFTsByOwner = async (
   const metadataPromises: Promise<NFTMetadata>[] = metadataURIs.map(
     (metadataURI: string) => {
       // We do not await in order to return the Promise
+      console.log("READING METADATA", metadataURI);
       return readCeramicDocument<NFTMetadata>(ceramic, metadataURI);
     }
   );
@@ -55,13 +57,11 @@ export const getGeoNFTsByOwner = async (
   return nfts;
 };
 
-export const getGeoNFTContract = async (
-  provider: ethers.providers.Web3Provider,
-  networkMapping: any
-): Promise<Contract> => {
+export const getGeoNFTContract = async (provider: any): Promise<Contract> => {
   try {
-    const signer = provider.getSigner();
-    const chainId: number = await (await provider.getNetwork()).chainId;
+    const web3provider = new ethers.providers.Web3Provider(provider);
+    const signer = web3provider.getSigner();
+    const chainId: number = await (await web3provider.getNetwork()).chainId;
     const chainIdStr: string = chainId.toString();
     console.log(`Connected on chain ${chainId}`);
 

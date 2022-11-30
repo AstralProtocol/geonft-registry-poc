@@ -18,7 +18,7 @@ import {
   geoNftsLayer,
 } from "./OpenLayersVariables";
 import NFTForm, { Metadata } from "../NFTForm";
-import { nftsStore } from "../../features/nfts/nftsStore";
+import { useNftsStore } from "../../features/nfts/nftsStore";
 import { MapBrowserEvent } from "ol";
 
 enum Status {
@@ -37,6 +37,7 @@ enum EditionStatus {
 let isDeleteFeatureActive = false;
 
 const MapWrapper = observer((): JSX.Element => {
+  const nftsStore = useNftsStore();
   const { nfts } = nftsStore;
   console.log("MAP NFTS: ", toJS(nfts));
 
