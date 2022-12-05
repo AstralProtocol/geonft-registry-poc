@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { ThemeProvider } from "@mui/material/styles";
-import { Container, CssBaseline, Box, Grid, Typography } from "@mui/material";
+import {
+  Container,
+  CssBaseline,
+  Box,
+  Grid,
+  Typography,
+  AppBar,
+  Toolbar,
+} from "@mui/material";
 import CeramicClient from "@ceramicnetwork/http-client";
 import { Contract } from "ethers";
 // import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
@@ -27,30 +35,43 @@ const App = () => {
     <ThemeProvider theme={theme}>
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
-      <Container maxWidth="xl">
-        <WalletStoreContext.Provider value={walletStore}>
-          <Main />
-        </WalletStoreContext.Provider>
-      </Container>
+      <WalletStoreContext.Provider value={walletStore}>
+        <Main />
+      </WalletStoreContext.Provider>
     </ThemeProvider>
   );
 };
 
 const Main = (): JSX.Element => {
+  const headerHeight = 100;
+
   return (
-    <Grid container rowSpacing={5}>
-      <Grid item xs={12} mt={4}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Kolektivo Curaçao GeoNFT PoC
-        </Typography>
-        <Box mt={6}>
+    <Box bgcolor="olive" display="flex" flexDirection="column" height="100%">
+      <AppBar position="fixed">
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          height={headerHeight}
+          px={2}
+        >
+          <Typography variant="h4" component="h1">
+            Kolektivo Curaçao GeoNFT PoC
+          </Typography>
           <Wallet />
         </Box>
-      </Grid>
-      <Grid item xs={12}>
+      </AppBar>
+      <Box mt={`${headerHeight}px`}>
         <Body />
-      </Grid>
-    </Grid>
+      </Box>
+      {/* <Container maxWidth="xl">
+        <Grid container rowSpacing={5}>
+          <Grid item xs={12}>
+            <Body />
+          </Grid>
+        </Grid>
+      </Container> */}
+    </Box>
   );
 };
 
@@ -100,20 +121,26 @@ const Body = observer((): JSX.Element => {
   if (loadingStatus === "wallet" || loadingStatus === "content") {
     const msg =
       loadingStatus === "wallet" ? "Connecting wallet..." : "Loading NFTs...";
-    return <Loading>{msg}</Loading>;
+    return (
+      <Box mt={10}>
+        <Loading>{msg}</Loading>
+      </Box>
+    );
   }
 
   if (!address || !ceramic || !nftContract) {
     return (
-      <Typography
-        variant="body2"
-        component="h2"
-        color="text.secondary"
-        textAlign="center"
-        gutterBottom
-      >
-        Wallet status: {WalletStatusEnums[status]}
-      </Typography>
+      <Box mt={10}>
+        <Typography
+          variant="body2"
+          component="h2"
+          color="text.secondary"
+          textAlign="center"
+          gutterBottom
+        >
+          Wallet status: {WalletStatusEnums[status]}
+        </Typography>
+      </Box>
     );
   }
 
@@ -123,9 +150,10 @@ const Body = observer((): JSX.Element => {
 
   return (
     <NftsStoreContext.Provider value={nftsStore}>
-      <Box display="flex" gap={4}>
+      <Box display="flex">
         <Box flexGrow={1}>
           <Map />
+          {/* MAPA */}
         </Box>
         <Box width="400px">
           <NFTsList />

@@ -14,7 +14,9 @@ const Wallet = observer((): JSX.Element => {
   const disconnectWallet = () => walletStore.disconnectWallet();
 
   return (
-    <Box>
+    <Box display="flex" gap={4}>
+      {connected && <span>Address: </span>}
+      {connected && <span>Balance: </span>}
       <LoadingButton
         variant="contained"
         loading={walletStore.status === WalletStatusEnums.LOADING}
@@ -22,12 +24,6 @@ const Wallet = observer((): JSX.Element => {
       >
         {connected ? "Disconnect" : "Connect"} Wallet
       </LoadingButton>
-      {connected && (
-        <Box>
-          <p>Address: {walletStore.address}</p>
-          <p>Balance: {walletStore.balance} ETH</p>
-        </Box>
-      )}
     </Box>
   );
 });

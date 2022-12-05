@@ -28,7 +28,14 @@ export const NFTsList = observer((): JSX.Element => {
   };
 
   return (
-    <Box border={1} borderColor="white" borderRadius={2} p={4}>
+    <Box
+      border={1}
+      borderColor="white"
+      borderRadius={2}
+      p={4}
+      height="calc(100vh - 100px)"
+      overflow="auto"
+    >
       <Typography variant="h5" gutterBottom>
         NFTs
       </Typography>
