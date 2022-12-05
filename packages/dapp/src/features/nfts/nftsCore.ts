@@ -4,9 +4,9 @@ import { CeramicClient } from "@ceramicnetwork/http-client";
 import { readCeramicDocument } from "../docs/docsCore";
 import networkMapping from "../../deployments.json";
 
-// TODO: Create NFTId type
+export type NFTId = number;
 export interface NFT {
-  id: number;
+  id: NFTId;
   geojson: string;
   metadataURI: string;
   metadata: NFTMetadata;

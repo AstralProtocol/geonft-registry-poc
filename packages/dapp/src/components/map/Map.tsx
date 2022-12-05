@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toJS } from "mobx";
 import { observer } from "mobx-react-lite";
-import { Button, Box, Typography, CircularProgress } from "@mui/material";
+import { Button, Box } from "@mui/material";
 import Map from "ol/Map";
 import Feature from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
@@ -9,8 +9,9 @@ import VectorSource from "ol/source/Vector";
 import { Polygon, MultiPolygon } from "ol/geom";
 import GeoJSON from "ol/format/GeoJSON";
 import MapBrowserEvent from "ol/MapBrowserEvent";
-import NFTForm, { Metadata } from "../NFTForm";
+import { NFTId } from "../../features/nfts/nftsCore";
 import { useNftsStore } from "../../features/nfts/nftsStore";
+import NFTForm from "../NFTForm";
 import { Loading } from "../Loading";
 import {
   initMap,
@@ -48,7 +49,6 @@ const MapWrapper = observer((): JSX.Element => {
   );
   const [formIsOpen, setFormIsOpen] = useState(false);
   const [geojson, setGeojson] = useState("");
-  const [metadata, setMetadata] = useState<Metadata | undefined>();
   const [selectedFeature, setSelectedFeature] = useState<
     Feature<MultiPolygon> | undefined
   >();
@@ -89,6 +89,7 @@ const MapWrapper = observer((): JSX.Element => {
 
   // PUBLIC FUNCTIONS
   const createNft = () => {
+    nftsStore.editMode = "CREATE";
     setStatus(Status.CREATE);
     draw.setActive(true);
   };
@@ -98,6 +99,7 @@ const MapWrapper = observer((): JSX.Element => {
       alert("Please select a feature to modify");
       return;
     }
+    nftsStore.editMode = "UPDATE_METADATA";
     const polygonFeatures =
       _convertMultiPolygonFeatureToPolygonFeatures(selectedFeature);
 
@@ -111,6 +113,7 @@ const MapWrapper = observer((): JSX.Element => {
 
   const editMetadata = () => {
     setStatus(Status.EDIT_METADATA);
+    nftsStore.editMode = "UPDATE_METADATA";
     _setSelectedFeatureAsEditNft();
   };
 
@@ -172,24 +175,35 @@ const MapWrapper = observer((): JSX.Element => {
       _convertPolygonFeaturesToMultiPolygonFeature(createdFeaturesPolygon);
     const geojson = new GeoJSON().writeFeature(createdFeatureMultiPolygon);
 
-    setMetadata(undefined);
     setGeojson(geojson);
     setFormIsOpen(true);
   };
 
-  const _onFormSubmit = () => {
-    const createdFeaturesPolygon = _getEditLayer().getSource()?.getFeatures();
+  const _onFormSubmit = (nftId: NFTId | undefined) => {
+    const mode = nftsStore.editMode;
 
-    if (!createdFeaturesPolygon || createdFeaturesPolygon.length === 0) {
-      console.log("INSIDE ERROR");
-      throw new Error("Geometry cannot be empty");
+    if (mode === "UPDATE_METADATA") {
+      _resetEdition();
+      return;
     }
 
-    const createdFeatureMultiPolygon =
-      _convertPolygonFeaturesToMultiPolygonFeature(createdFeaturesPolygon);
+    if (mode === "CREATE" || mode === "UPDATE_GEOMETRY") {
+      const createdFeaturesPolygon = _getEditLayer().getSource()?.getFeatures();
 
-    geoNftsLayer.getSource()?.addFeature(createdFeatureMultiPolygon);
-    _resetEdition();
+      if (!createdFeaturesPolygon || createdFeaturesPolygon.length === 0) {
+        throw new Error("Geometry cannot be empty");
+      }
+
+      const createdFeatureMultiPolygon =
+        _convertPolygonFeaturesToMultiPolygonFeature(createdFeaturesPolygon);
+
+      if (nftId) {
+        createdFeatureMultiPolygon.setId(nftId);
+      }
+
+      geoNftsLayer.getSource()?.addFeature(createdFeatureMultiPolygon);
+      _resetEdition();
+    }
   };
 
   const _updateNftGeometry = async () => {
@@ -212,6 +226,8 @@ const MapWrapper = observer((): JSX.Element => {
     if (success) {
       geoNftsLayer.getSource()?.addFeature(modifiedFeatureMultiPolygon);
     }
+
+    _resetEdition();
   };
 
   const _editNftMetadata = () => {
@@ -221,7 +237,6 @@ const MapWrapper = observer((): JSX.Element => {
       return;
     }
 
-    setMetadata(editNft.metadata);
     setGeojson(editNft.geojson);
     setFormIsOpen(true);
   };
@@ -269,37 +284,6 @@ const MapWrapper = observer((): JSX.Element => {
     });
   };
 
-  const _convertPolygonFeaturesToMultiPolygonFeature = (
-    features: Feature<Polygon>[]
-  ): Feature<MultiPolygon> => {
-    const multiPolygonCoordinatesArray = features.map((feature) => {
-      const geometry = (feature.getGeometry() as Polygon) || new Polygon([]);
-      return geometry.getCoordinates();
-    });
-
-    const multiPolygonFeature = new Feature({
-      geometry: new MultiPolygon(multiPolygonCoordinatesArray),
-    });
-
-    return multiPolygonFeature;
-  };
-
-  const _convertMultiPolygonFeatureToPolygonFeatures = (
-    feature: Feature<MultiPolygon>
-  ): Feature<Polygon>[] => {
-    const multiPolygonGeometry = feature.getGeometry() as MultiPolygon;
-    const polygonCoordinatesArray = multiPolygonGeometry.getCoordinates();
-    const polygonFeatures = polygonCoordinatesArray.map(
-      (polygonCoordinates) => {
-        return new Feature({
-          geometry: new Polygon(polygonCoordinates),
-        });
-      }
-    );
-
-    return polygonFeatures;
-  };
-
   const _getEditLayer = (): VectorLayer<VectorSource<Polygon>> => {
     return editLayer;
   };
@@ -311,6 +295,7 @@ const MapWrapper = observer((): JSX.Element => {
     draw.setActive(false);
     modify.setActive(false);
     editLayerSource?.clear();
+    nftsStore.editMode = "IDLE";
     setSelectedFeature(undefined);
   };
 
@@ -406,7 +391,6 @@ const MapWrapper = observer((): JSX.Element => {
       </Box>
       <NFTForm
         open={formIsOpen}
-        metadata={metadata}
         geojson={geojson}
         onAccept={_onFormSubmit}
         closeForm={() => setFormIsOpen(false)}
@@ -414,5 +398,34 @@ const MapWrapper = observer((): JSX.Element => {
     </Box>
   );
 });
+
+const _convertPolygonFeaturesToMultiPolygonFeature = (
+  features: Feature<Polygon>[]
+): Feature<MultiPolygon> => {
+  const multiPolygonCoordinatesArray = features.map((feature) => {
+    const geometry = (feature.getGeometry() as Polygon) || new Polygon([]);
+    return geometry.getCoordinates();
+  });
+
+  const multiPolygonFeature = new Feature({
+    geometry: new MultiPolygon(multiPolygonCoordinatesArray),
+  });
+
+  return multiPolygonFeature;
+};
+
+const _convertMultiPolygonFeatureToPolygonFeatures = (
+  feature: Feature<MultiPolygon>
+): Feature<Polygon>[] => {
+  const multiPolygonGeometry = feature.getGeometry() as MultiPolygon;
+  const polygonCoordinatesArray = multiPolygonGeometry.getCoordinates();
+  const polygonFeatures = polygonCoordinatesArray.map((polygonCoordinates) => {
+    return new Feature({
+      geometry: new Polygon(polygonCoordinates),
+    });
+  });
+
+  return polygonFeatures;
+};
 
 export default MapWrapper;

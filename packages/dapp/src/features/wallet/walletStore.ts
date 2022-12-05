@@ -3,13 +3,11 @@ import { makeAutoObservable } from "mobx";
 import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import { create, IPFSHTTPClient } from "ipfs-http-client";
 
 export class WalletStore {
   address: string | null = null;
   balance: string | null = null;
   status: WalletStatusEnums = WalletStatusEnums.DISCONNECTED;
-  ipfsClient: IPFSHTTPClient | null = null;
   provider: any | null = null;
   private web3Modal: Web3Modal | null = null;
 
@@ -23,7 +21,8 @@ export class WalletStore {
 
     try {
       const web3Modal = new Web3Modal({
-        cacheProvider: false,
+        theme: "dark",
+        cacheProvider: true,
         providerOptions: {
           walletconnect: {
             package: WalletConnectProvider,
@@ -71,7 +70,6 @@ export class WalletStore {
       this.balance = ethers.utils.formatEther(balance);
       this.provider = provider;
       this.web3Modal = web3Modal;
-      this.ipfsClient = create(ipfsOptions);
       this.status = WalletStatusEnums.CONNECTED;
 
       console.log("Connected to wallet");
@@ -97,22 +95,6 @@ export class WalletStore {
   };
 }
 
-const ipfsOptions = {
-  host: "ipfs.infura.io",
-  port: 5001,
-  protocol: "https",
-  apiPath: "/api/v0",
-  headers: {
-    authorization:
-      "Basic " +
-      Buffer.from(
-        process.env.REACT_APP_PROJECT_ID +
-          ":" +
-          process.env.REACT_APP_PROJECT_SECRET
-      ).toString("base64"),
-  },
-};
-
 export enum WalletStatusEnums {
   DISCONNECTED,
   LOADING,
@@ -128,5 +110,3 @@ export const useWalletStore = (): WalletStore => {
   }
   return store;
 };
-
-export const walletStore = new WalletStore();

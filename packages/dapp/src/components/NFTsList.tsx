@@ -6,9 +6,8 @@ import {
   List,
   ListItem,
   ListItemText,
-  CircularProgress,
 } from "@mui/material";
-import { NFT } from "../features/nfts/nftsCore";
+import { NFT, NFTId } from "../features/nfts/nftsCore";
 import { useNftsStore } from "../features/nfts/nftsStore";
 import { Loading } from "./Loading";
 
@@ -25,15 +24,7 @@ export const NFTsList = observer((): JSX.Element => {
       return <NoNFTsFound />;
     }
 
-    return <NFTs nfts={nfts} editMetadata={editMetadata} />;
-  };
-
-  const editMetadata = (nftId: number) => {
-    const editNft = nfts.find((nft) => nft.id === nftId);
-
-    if (editNft) {
-      nftsStore.editNft = editNft;
-    }
+    return <NFTs nfts={nfts} />;
   };
 
   return (
@@ -46,31 +37,42 @@ export const NFTsList = observer((): JSX.Element => {
   );
 });
 
-const NFTs = ({ nfts, editMetadata }: NFTsProps): JSX.Element => (
-  <List>
-    {nfts.map((nft) => (
-      <ListItem key={nft.id} style={{ paddingLeft: 0 }} divider>
-        <ListItemText
-          primary={nft.metadata.name || "Not defined"}
-          secondary={
-            <>
-              ID: {nft.id}
-              <br />
-              {nft.metadata.description || "Not defined"}
-            </>
-          }
-        />
-        <Button variant="contained" onClick={() => editMetadata(nft.id)}>
-          Edit metadata
-        </Button>
-      </ListItem>
-    ))}
-  </List>
-);
+const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
+  const nftsStore = useNftsStore();
+
+  const editMetadata = (nftId: NFTId) => {
+    const editNft = nfts.find((nft) => nft.id === nftId);
+
+    if (editNft) {
+      nftsStore.editNft = editNft;
+      nftsStore.editMode = "UPDATE_METADATA";
+    }
+  };
+  return (
+    <List>
+      {nfts.map((nft) => (
+        <ListItem key={nft.id} style={{ paddingLeft: 0 }} divider>
+          <ListItemText
+            primary={nft.metadata.name || "Not defined"}
+            secondary={
+              <>
+                ID: {nft.id}
+                <br />
+                {nft.metadata.description || "Not defined"}
+              </>
+            }
+          />
+          <Button variant="contained" onClick={() => editMetadata(nft.id)}>
+            Edit metadata
+          </Button>
+        </ListItem>
+      ))}
+    </List>
+  );
+};
 
 interface NFTsProps {
   nfts: NFT[];
-  editMetadata: (nftId: number) => void;
 }
 
 const NoNFTsFound = (): JSX.Element => (

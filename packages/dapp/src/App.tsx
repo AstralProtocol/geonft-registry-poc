@@ -55,6 +55,7 @@ const Main = (): JSX.Element => {
 };
 
 type LoadingStatus = "wallet" | "content" | "idle";
+
 const Body = observer((): JSX.Element => {
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>("idle");
   const [ceramic, setCeramic] = useState<CeramicClient | null>(null);
@@ -98,9 +99,7 @@ const Body = observer((): JSX.Element => {
 
   if (loadingStatus === "wallet" || loadingStatus === "content") {
     const msg =
-      loadingStatus === "wallet"
-        ? "Connecting wallet..."
-        : "Loading content...";
+      loadingStatus === "wallet" ? "Connecting wallet..." : "Loading NFTs...";
     return <Loading>{msg}</Loading>;
   }
 
