@@ -57,10 +57,11 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
     }
   };
 
-  const repeatedNfts = [...nfts, ...nfts, ...nfts, ...nfts, ...nfts];
+  // const repeatedNfts = [...nfts, ...nfts, ...nfts, ...nfts, ...nfts];
+
   return (
     <List>
-      {repeatedNfts.map((nft, idx) => (
+      {nfts.map((nft, idx) => (
         <ListItem
           key={idx}
           style={{ padding: "16px 16px 16px 0", alignItems: "start" }}

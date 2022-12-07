@@ -219,7 +219,7 @@ const NFTForm = observer((props: NFTProps) => {
                 fullWidth
                 onClick={handleSubmit}
               >
-                Create NFT
+                {nftsStore.editMode === "CREATE" ? "Create NFT" : "Update NFT"}
               </LoadingButton>
             </Grid>
           </Grid>
