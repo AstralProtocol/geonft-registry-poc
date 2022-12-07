@@ -82,7 +82,7 @@ const Body = observer((): JSX.Element => {
   };
 
   useEffect(() => {
-    // fetchStoreData();
+    fetchStoreData();
   }, [connected, address]);
 
   useEffect(() => {
@@ -105,21 +105,21 @@ const Body = observer((): JSX.Element => {
     );
   }
 
-  // if (!address || !ceramic || !nftContract) {
-  //   return (
-  //     <Box mt={10}>
-  //       <Typography
-  //         variant="body2"
-  //         component="h2"
-  //         color="text.secondary"
-  //         textAlign="center"
-  //         gutterBottom
-  //       >
-  //         Wallet status: {WalletStatusEnums[status]}
-  //       </Typography>
-  //     </Box>
-  //   );
-  // }
+  if (!address || !ceramic || !nftContract) {
+    return (
+      <Box mt={10}>
+        <Typography
+          variant="body2"
+          component="h2"
+          color="text.secondary"
+          textAlign="center"
+          gutterBottom
+        >
+          Wallet status: {WalletStatusEnums[status]}
+        </Typography>
+      </Box>
+    );
+  }
 
   const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
 
