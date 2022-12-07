@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toJS } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Button, Box } from "@mui/material";
-import Map from "ol/Map";
+import MapOL from "ol/Map";
 import Feature from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
@@ -38,7 +38,7 @@ enum EditionStatus {
 
 let isDeleteFeatureActive = false;
 
-const MapWrapper = observer((): JSX.Element => {
+export const Map = observer((): JSX.Element => {
   const nftsStore = useNftsStore();
   const { nfts } = nftsStore;
   console.log("MAP NFTS: ", toJS(nfts));
@@ -265,7 +265,7 @@ const MapWrapper = observer((): JSX.Element => {
     nftsStore.editNft = editNft;
   };
 
-  const _deleteClickedFeature = (map: Map, e: MapBrowserEvent<any>) => {
+  const _deleteClickedFeature = (map: MapOL, e: MapBrowserEvent<any>) => {
     if (!map || !isDeleteFeatureActive) return;
 
     const editLayerSource = editLayer.getSource();
@@ -427,5 +427,3 @@ const _convertMultiPolygonFeatureToPolygonFeatures = (
 
   return polygonFeatures;
 };
-
-export default MapWrapper;

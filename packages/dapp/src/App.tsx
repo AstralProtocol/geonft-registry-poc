@@ -25,7 +25,7 @@ import { NFTsStore, NftsStoreContext } from "./features/nfts/nftsStore";
 import { getGeoNFTContract } from "./features/nfts/nftsCore";
 import { createCeramicClient } from "./features/docs/docsCore";
 import { NFTsList } from "./components/NFTsList";
-import Map from "./components/map/Map";
+import { Map } from "./components/map/Map";
 import { Loading } from "./components/Loading";
 
 const App = () => {
@@ -46,7 +46,7 @@ const Main = (): JSX.Element => {
   const headerHeight = 100;
 
   return (
-    <Box bgcolor="olive" display="flex" flexDirection="column" height="100%">
+    <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
       <AppBar position="fixed">
         <Box
           display="flex"
