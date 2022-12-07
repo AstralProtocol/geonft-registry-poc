@@ -38,7 +38,7 @@ export const NFTsList = observer((): JSX.Element => {
       position="relative"
     >
       <Typography variant="h5" gutterBottom>
-        NFTs
+        Minted GeoNFTs
       </Typography>
       {renderContent()}
     </Box>
@@ -56,10 +56,16 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
       nftsStore.editMode = "UPDATE_METADATA";
     }
   };
+
+  const repeatedNfts = [...nfts, ...nfts, ...nfts, ...nfts, ...nfts];
   return (
     <List>
-      {nfts.map((nft) => (
-        <ListItem key={nft.id} style={{ paddingLeft: 0 }} divider>
+      {repeatedNfts.map((nft, idx) => (
+        <ListItem
+          key={idx}
+          style={{ padding: "16px 16px 16px 0", alignItems: "start" }}
+          divider
+        >
           <ListItemText
             primary={nft.metadata.name || "Not defined"}
             secondary={
@@ -69,8 +75,15 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
                 {nft.metadata.description || "Not defined"}
               </>
             }
+            style={{ margin: 0 }}
           />
-          <Button variant="contained" onClick={() => editMetadata(nft.id)}>
+          <Button
+            variant="contained"
+            onClick={() => editMetadata(nft.id)}
+            style={{
+              whiteSpace: "nowrap",
+            }}
+          >
             Edit metadata
           </Button>
         </ListItem>

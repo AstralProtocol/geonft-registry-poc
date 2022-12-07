@@ -13,9 +13,19 @@ export const Header = (): JSX.Element => {
         height={HEADER_HEIGHT}
         px={2}
       >
-        <Typography variant="h4" component="h1">
-          Kolektivo Curaçao GeoNFT PoC
-        </Typography>
+        <a href="https://astral.global">
+          <img
+            src="/assets/Medium avatar-3.png"
+            alt="logo"
+            width="50"
+            height="50"
+          />
+        </a>
+        <Box flexGrow={1} ml={2}>
+          <Typography variant="h1" component="h1">
+            Kolektivo Curaçao GeoNFT PoC
+          </Typography>
+        </Box>
         <Wallet />
       </Box>
     </AppBar>

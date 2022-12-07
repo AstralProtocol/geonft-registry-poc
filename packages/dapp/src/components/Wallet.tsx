@@ -21,13 +21,14 @@ const Wallet = observer((): JSX.Element => {
   const disconnectWallet = () => walletStore.disconnectWallet();
 
   return (
-    <Box display="flex" alignItems="center" gap={4}>
+    <Box display="flex" alignItems="center" gap={1}>
       {connected && <AddressChip address={address} />}
       {connected && <BalanceChip balance={balance} />}
       <LoadingButton
         variant="contained"
         loading={walletStore.status === WalletStatusEnums.LOADING}
         onClick={connected ? disconnectWallet : connectWallet}
+        style={{ marginLeft: "16px" }}
       >
         {connected ? "Disconnect" : "Connect"} Wallet
       </LoadingButton>

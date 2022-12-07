@@ -21,10 +21,16 @@ const theme = createTheme({
   },
 });
 
-theme.typography.h6 = {
-  fontSize: ".7rem",
-  "@media (min-width:600px)": {
-    fontSize: ".7rem",
+theme.typography.h1 = {
+  fontSize: "1rem",
+  [theme.breakpoints.up("sm")]: {
+    fontSize: "1.5rem",
+  },
+  [theme.breakpoints.up("md")]: {
+    fontSize: "1.8rem",
+  },
+  [theme.breakpoints.up("lg")]: {
+    fontSize: "2.2rem",
   },
 };
 
