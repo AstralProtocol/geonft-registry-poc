@@ -1,20 +1,11 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { ThemeProvider } from "@mui/material/styles";
-import {
-  Container,
-  CssBaseline,
-  Box,
-  Grid,
-  Typography,
-  AppBar,
-  Toolbar,
-} from "@mui/material";
+import { CssBaseline, Box, Typography } from "@mui/material";
 import CeramicClient from "@ceramicnetwork/http-client";
 import { Contract } from "ethers";
 // import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import theme from "./theme";
-import Wallet from "./components/Wallet";
 import {
   WalletStatusEnums,
   WalletStore,
@@ -24,6 +15,7 @@ import {
 import { NFTsStore, NftsStoreContext } from "./features/nfts/nftsStore";
 import { getGeoNFTContract } from "./features/nfts/nftsCore";
 import { createCeramicClient } from "./features/docs/docsCore";
+import { Header, HEADER_HEIGHT } from "./components/Header";
 import { NFTsList } from "./components/NFTsList";
 import { Map } from "./components/map/Map";
 import { Loading } from "./components/Loading";
@@ -43,25 +35,10 @@ const App = () => {
 };
 
 const Main = (): JSX.Element => {
-  const headerHeight = 100;
-
   return (
     <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
-      <AppBar position="fixed">
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          height={headerHeight}
-          px={2}
-        >
-          <Typography variant="h4" component="h1">
-            Kolektivo Curaçao GeoNFT PoC
-          </Typography>
-          <Wallet />
-        </Box>
-      </AppBar>
-      <Box mt={`${headerHeight}px`}>
+      <Header />
+      <Box mt={`${HEADER_HEIGHT}px`}>
         <Body />
       </Box>
       {/* <Container maxWidth="xl">
@@ -105,7 +82,7 @@ const Body = observer((): JSX.Element => {
   };
 
   useEffect(() => {
-    fetchStoreData();
+    // fetchStoreData();
   }, [connected, address]);
 
   useEffect(() => {
@@ -128,21 +105,21 @@ const Body = observer((): JSX.Element => {
     );
   }
 
-  if (!address || !ceramic || !nftContract) {
-    return (
-      <Box mt={10}>
-        <Typography
-          variant="body2"
-          component="h2"
-          color="text.secondary"
-          textAlign="center"
-          gutterBottom
-        >
-          Wallet status: {WalletStatusEnums[status]}
-        </Typography>
-      </Box>
-    );
-  }
+  // if (!address || !ceramic || !nftContract) {
+  //   return (
+  //     <Box mt={10}>
+  //       <Typography
+  //         variant="body2"
+  //         component="h2"
+  //         color="text.secondary"
+  //         textAlign="center"
+  //         gutterBottom
+  //       >
+  //         Wallet status: {WalletStatusEnums[status]}
+  //       </Typography>
+  //     </Box>
+  //   );
+  // }
 
   const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
 
