@@ -2,9 +2,6 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline, Box, Typography } from "@mui/material";
-import CeramicClient from "@ceramicnetwork/http-client";
-import { Contract } from "ethers";
-// import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import theme from "./theme";
 import {
   WalletStatusEnums,
@@ -34,78 +31,18 @@ const App = () => {
   );
 };
 
-const Main = (): JSX.Element => {
-  return (
-    <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
-      <Header />
-      <Box mt={`${HEADER_HEIGHT}px`}>
-        <Body />
-      </Box>
-      {/* <Container maxWidth="xl">
-        <Grid container rowSpacing={5}>
-          <Grid item xs={12}>
-            <Body />
-          </Grid>
-        </Grid>
-      </Container> */}
-    </Box>
-  );
-};
+const Main = observer((): JSX.Element => {
+  const { status, address } = useWalletStore();
+  const connected = status === WalletStatusEnums.CONNECTED && address;
 
-type LoadingStatus = "wallet" | "content" | "idle";
-
-const Body = observer((): JSX.Element => {
-  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>("idle");
-  const [ceramic, setCeramic] = useState<CeramicClient | null>(null);
-  const [nftContract, setNftContract] = useState<Contract | null>(null);
-
-  const walletStore = useWalletStore();
-  const { status, address, provider } = walletStore;
-  const connected = status === WalletStatusEnums.CONNECTED;
-
-  const fetchStoreData = async () => {
-    if (!connected || !address) return;
-
-    setLoadingStatus("content");
-    const [ceramic, nftContract] = await Promise.all([
-      createCeramicClient(provider, address),
-      getGeoNFTContract(provider),
-    ]);
-
-    if (!ceramic || !nftContract) {
-      throw new Error("Ceramic client or NFT contract not created");
-    }
-
-    setCeramic(ceramic);
-    setNftContract(nftContract);
-    setLoadingStatus("idle");
-  };
-
-  useEffect(() => {
-    fetchStoreData();
-  }, [connected, address]);
-
-  useEffect(() => {
+  const NotConnected = () => {
     if (status === WalletStatusEnums.LOADING) {
-      setLoadingStatus("wallet");
+      return (
+        <Box mt={10}>
+          <Loading>Connecting wallet...</Loading>
+        </Box>
+      );
     }
-
-    if (status === WalletStatusEnums.DISCONNECTED) {
-      setLoadingStatus("idle");
-    }
-  }, [status]);
-
-  if (loadingStatus === "wallet" || loadingStatus === "content") {
-    const msg =
-      loadingStatus === "wallet" ? "Connecting wallet..." : "Loading NFTs...";
-    return (
-      <Box mt={10}>
-        <Loading>{msg}</Loading>
-      </Box>
-    );
-  }
-
-  if (!address || !ceramic || !nftContract) {
     return (
       <Box mt={10}>
         <Typography
@@ -119,18 +56,62 @@ const Body = observer((): JSX.Element => {
         </Typography>
       </Box>
     );
+  };
+
+  return (
+    <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
+      <Header />
+      <Box mt={`${HEADER_HEIGHT}px`}>
+        {connected ? <Body /> : <NotConnected />}
+      </Box>
+    </Box>
+  );
+});
+
+// Extract to different component to avoid re-rendering on the Main component
+const Body = observer((): JSX.Element => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [nftsStore, setNftsStore] = useState<NFTsStore | null>(null);
+
+  const walletStore = useWalletStore();
+  const address = walletStore.address as string;
+  const provider = walletStore.provider;
+
+  const fetchStoreData = async () => {
+    setIsLoading(true);
+    const [ceramic, nftContract] = await Promise.all([
+      createCeramicClient(provider, address),
+      getGeoNFTContract(provider),
+    ]);
+
+    if (!ceramic || !nftContract) {
+      throw new Error("Ceramic client or NFT contract not created");
+    }
+
+    const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
+    await nftsStore.fetchNFTs();
+
+    setNftsStore(nftsStore);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchStoreData();
+  }, []);
+
+  if (isLoading || !nftsStore) {
+    return (
+      <Box mt={10}>
+        <Loading>Loading NFTs...</Loading>
+      </Box>
+    );
   }
-
-  const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
-
-  nftsStore.fetchNFTs();
 
   return (
     <NftsStoreContext.Provider value={nftsStore}>
       <Box display="flex">
         <Box flexGrow={1}>
           <Map />
-          {/* MAPA */}
         </Box>
         <Box width="400px">
           <NFTsList />
