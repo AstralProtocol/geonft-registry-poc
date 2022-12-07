@@ -13,6 +13,7 @@ import { NFTId } from "../../features/nfts/nftsCore";
 import { useNftsStore } from "../../features/nfts/nftsStore";
 import NFTForm from "../NFTForm";
 import { Loading } from "../Loading";
+import { HEADER_HEIGHT } from "../Header";
 import {
   initMap,
   select,
@@ -301,7 +302,7 @@ export const Map = observer((): JSX.Element => {
 
   return (
     <Box position="relative">
-      <Box id="map" width="100%" height="400px">
+      <Box id="map" width="100%" height={`calc(100vh - ${HEADER_HEIGHT}px)`}>
         {nftsStore.isBusyFetching && <Loading>Loading NFTs...</Loading>}
       </Box>
       <Box

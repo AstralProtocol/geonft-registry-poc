@@ -10,6 +10,7 @@ import {
 import { NFT, NFTId } from "../features/nfts/nftsCore";
 import { useNftsStore } from "../features/nfts/nftsStore";
 import { Loading } from "./Loading";
+import { HEADER_HEIGHT } from "./Header";
 
 export const NFTsList = observer((): JSX.Element => {
   const nftsStore = useNftsStore();
@@ -29,12 +30,12 @@ export const NFTsList = observer((): JSX.Element => {
 
   return (
     <Box
-      border={1}
-      borderColor="white"
-      borderRadius={2}
       p={4}
-      height="calc(100vh - 100px)"
+      height={`calc(100vh - ${HEADER_HEIGHT}px)`}
       overflow="auto"
+      boxShadow={8}
+      zIndex={9}
+      position="relative"
     >
       <Typography variant="h5" gutterBottom>
         NFTs
