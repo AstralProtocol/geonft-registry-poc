@@ -83,9 +83,10 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
             onClick={() => editMetadata(nft.id)}
             style={{
               whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
-            Edit metadata
+            Edit
           </Button>
         </ListItem>
       ))}
@@ -98,5 +99,7 @@ interface NFTsProps {
 }
 
 const NoNFTsFound = (): JSX.Element => (
-  <Typography textAlign="center">No NFTs found</Typography>
+  <Typography textAlign="center" mt={2} color="rgba(255, 255, 255, 0.5)">
+    No NFTs found
+  </Typography>
 );

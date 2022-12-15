@@ -43,6 +43,7 @@ const Main = observer((): JSX.Element => {
         </Box>
       );
     }
+
     return (
       <Box mt={10}>
         <Typography

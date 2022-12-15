@@ -10,6 +10,7 @@ import {
   Modify,
   defaults as defaultInteractions,
 } from "ol/interaction";
+import Overlay from "ol/Overlay";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style";
 import { Polygon, MultiPolygon } from "ol/geom";
 import { fromLonLat } from "ol/proj";

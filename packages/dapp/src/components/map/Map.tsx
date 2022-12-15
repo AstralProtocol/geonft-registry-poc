@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { toJS } from "mobx";
 import { observer } from "mobx-react-lite";
-import { Button, Box } from "@mui/material";
+import { Button, Box, Typography, createStyles } from "@mui/material";
 import MapOL from "ol/Map";
-import Feature from "ol/Feature";
+import Feature, { FeatureLike } from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { Polygon, MultiPolygon } from "ol/geom";
+import Overlay from "ol/Overlay";
 import GeoJSON from "ol/format/GeoJSON";
+import { getCenter } from "ol/extent";
 import MapBrowserEvent from "ol/MapBrowserEvent";
 import { NFTId } from "../../features/nfts/nftsCore";
 import { useNftsStore } from "../../features/nfts/nftsStore";
@@ -38,6 +40,50 @@ enum EditionStatus {
 }
 
 let isDeleteFeatureActive = false;
+let popup: Overlay | null = null;
+
+const popupStyles = {
+  container: createStyles({
+    position: "relative",
+    maxWidth: 200,
+    backgroundColor: "white",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+    borderRadius: 2,
+    transform: "translateY(-100%)",
+    "&:before": {
+      content: '""',
+      top: "100%",
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: 0,
+      height: 0,
+      position: "absolute",
+      border: "solid transparent",
+      borderTopColor: "white",
+      borderWidth: 11,
+      pointerEvents: "none",
+      marginTop: "-1px",
+    },
+    "&:after": {
+      content: '""',
+      top: "100%",
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: 0,
+      height: 0,
+      position: "absolute",
+      border: "solid transparent",
+      borderTopColor: "white",
+      borderWidth: 10,
+      pointerEvents: "none",
+      marginTop: "-1px",
+    },
+  }),
+  body: createStyles({
+    color: "black",
+    padding: 1,
+  }),
+};
 
 export const Map = observer((): JSX.Element => {
   const nftsStore = useNftsStore();
@@ -57,10 +103,17 @@ export const Map = observer((): JSX.Element => {
   useEffect(() => {
     initMap.setTarget("map");
     initMap.on("click", (e) => _deleteClickedFeature(initMap, e));
+    initMap.on("pointermove", (e) => _showFeatureInfo(initMap, e));
     select.on("select", (e) => {
       const selectedFeature = e.target.getFeatures().getArray()[0];
       setSelectedFeature(selectedFeature);
     });
+    popup = new Overlay({
+      element: document.getElementById("overlay") || undefined,
+      offset: [0, 0],
+      positioning: "top-center",
+    });
+    initMap.addOverlay(popup);
   }, []);
 
   useEffect(() => {
@@ -285,6 +338,58 @@ export const Map = observer((): JSX.Element => {
     });
   };
 
+  const _showFeatureInfo = (map: MapOL, e: MapBrowserEvent<any>) => {
+    if (!map) return;
+
+    const foundFeatures: FeatureLike[] = [];
+
+    map.forEachFeatureAtPixel(e.pixel, (feature) => {
+      foundFeatures.push(feature);
+    });
+
+    // Hide popup
+    if (foundFeatures.length === 0) {
+      popup?.setPosition(undefined);
+      return;
+    }
+
+    foundFeatures.forEach((feature) => {
+      const nftId = feature.getId() as number;
+      const nft = nfts.find((nft) => nft.id === nftId);
+
+      if (!nft || !popup) {
+        return;
+      }
+
+      const { name, description, image } = nft.metadata;
+      const featureExtent = feature.getGeometry()?.getExtent();
+
+      if (!featureExtent) return;
+
+      const featureCentroid = getCenter(featureExtent);
+      popup.setPosition(featureCentroid);
+      const element = popup.getElement();
+      if (!element) return;
+
+      const popupName = element.querySelector("#popup-name");
+      const popupDescription = element.querySelector("#popup-description");
+      const popupImage = element.querySelector("#popup-image");
+      const popupHeight = element.clientHeight;
+
+      // Set popup position on center of feature. Add 10px to compensate for the popup arrow
+      // element.style.marginTop = `-${popupHeight + 10}px`;
+
+      const imgSrc = image
+        ? `https://ipfs.io/ipfs/${image}`
+        : "/assets/no-image-found.png";
+
+      if (!popupName || !popupDescription) return;
+      popupName.innerHTML = name;
+      popupDescription.innerHTML = description;
+      popupImage?.setAttribute("src", imgSrc);
+    });
+  };
+
   const _getEditLayer = (): VectorLayer<VectorSource<Polygon>> => {
     return editLayer;
   };
@@ -304,8 +409,25 @@ export const Map = observer((): JSX.Element => {
     <Box position="relative">
       <Box id="map" width="100%" height={`calc(100vh - ${HEADER_HEIGHT}px)`}>
         {nftsStore.isBusyFetching && <Loading>Loading NFTs...</Loading>}
+        <Box id="overlay" sx={popupStyles.container}>
+          <img
+            id="popup-image"
+            src=""
+            alt=""
+            style={{
+              maxWidth: "200px",
+              objectFit: "cover",
+              borderRadius: "8px 8px 0 0",
+            }}
+          />
+          <Box sx={popupStyles.body}>
+            <Typography id="popup-name" fontSize={16}></Typography>
+            <Typography id="popup-description" fontSize={13}></Typography>
+          </Box>
+        </Box>
       </Box>
       <Box
+        id="panel"
         position="absolute"
         top={8}
         left={8}
