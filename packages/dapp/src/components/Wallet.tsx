@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { observer } from "mobx-react-lite";
-import { Box, Chip, Tooltip } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  Tooltip,
+  Menu,
+  MenuItem,
+  Divider,
+} from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
@@ -12,37 +20,69 @@ import {
 } from "../features/wallet/walletStore";
 
 const Wallet = observer((): JSX.Element => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
   const walletStore = useWalletStore();
   const connected = walletStore.status === WalletStatusEnums.CONNECTED;
   const address = walletStore.address || "";
   const balance = walletStore.balance || "";
+  const isOpen = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   const connectWallet = async () => await walletStore.connectWallet();
   const disconnectWallet = () => walletStore.disconnectWallet();
 
+  const WalletButton = (): JSX.Element => (
+    <LoadingButton
+      variant="contained"
+      loading={walletStore.status === WalletStatusEnums.LOADING}
+      onClick={connected ? disconnectWallet : connectWallet}
+    >
+      {connected ? "Disconnect" : "Connect"} Wallet
+    </LoadingButton>
+  );
+
   return (
-    <Box display="flex" alignItems="center" gap={1}>
-      {connected && <AddressChip address={address} />}
-      {connected && <BalanceChip balance={balance} />}
-      <LoadingButton
-        variant="contained"
-        loading={walletStore.status === WalletStatusEnums.LOADING}
-        onClick={connected ? disconnectWallet : connectWallet}
-        style={{ marginLeft: "16px" }}
-      >
-        {connected ? "Disconnect" : "Connect"} Wallet
-      </LoadingButton>
-    </Box>
+    <>
+      <Box display={{ xs: "block", md: "none" }}>
+        <Button variant="outlined" onClick={handleClick}>
+          WALLET
+        </Button>
+        <Menu anchorEl={anchorEl} open={isOpen} onClose={handleClose}>
+          {connected && (
+            <MenuItem>
+              <AddressChip address={address} />
+            </MenuItem>
+          )}
+          {connected && (
+            <>
+              <MenuItem>
+                <BalanceChip balance={balance} />
+              </MenuItem>
+              <Divider />
+            </>
+          )}
+          <MenuItem>
+            <WalletButton />
+          </MenuItem>
+        </Menu>
+      </Box>
+      <Box display={{ xs: "none", md: "flex" }} alignItems="center" gap={1}>
+        {connected && <AddressChip address={address} />}
+        {connected && <BalanceChip balance={balance} />}
+        <Box style={{ marginLeft: "16px" }}>
+          <WalletButton />
+        </Box>
+      </Box>
+    </>
   );
 });
-
-const chipStyle: React.CSSProperties = {
-  padding: "8px",
-  height: "40px",
-  borderRadius: "9999px",
-  display: "flex",
-  alignItems: "center",
-};
 
 const AddressChip = ({ address }: { address: string }): JSX.Element => {
   const [copied, setCopied] = useState(false);
@@ -66,7 +106,16 @@ const AddressChip = ({ address }: { address: string }): JSX.Element => {
         <Chip
           icon={<ContentCopyIcon />}
           label={formattedAddress}
-          style={chipStyle}
+          sx={(theme) => ({
+            padding: "8px",
+            height: "40px",
+            borderRadius: "9999px",
+            display: "flex",
+            alignItems: "center",
+            [theme.breakpoints.down("md")]: {
+              flexGrow: 1,
+            },
+          })}
           onClick={() => {
             setCopied(true);
             navigator.clipboard.writeText(address);
@@ -83,7 +132,16 @@ const BalanceChip = ({ balance }: { balance: string }): JSX.Element => {
     <Chip
       icon={<AccountBalanceWalletIcon />}
       label={formattedBalance}
-      style={chipStyle}
+      sx={(theme) => ({
+        padding: "8px",
+        height: "40px",
+        borderRadius: "9999px",
+        display: "flex",
+        alignItems: "center",
+        [theme.breakpoints.down("md")]: {
+          flexGrow: 1,
+        },
+      })}
     />
   );
 };
