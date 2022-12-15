@@ -1,20 +1,29 @@
+import { useState } from "react";
 import { observer } from "mobx-react-lite";
-import { Box } from "@mui/system";
 import {
+  Box,
   Typography,
   Button,
+  Fab,
   List,
   ListItem,
   ListItemText,
+  Drawer,
 } from "@mui/material";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import { NFT, NFTId } from "../features/nfts/nftsCore";
 import { useNftsStore } from "../features/nfts/nftsStore";
 import { Loading } from "./Loading";
 import { HEADER_HEIGHT } from "./Header";
 
 export const NFTsList = observer((): JSX.Element => {
+  const [isOpen, setIsOpen] = useState(false);
   const nftsStore = useNftsStore();
   const nfts = nftsStore.nfts;
+
+  const toggleDrawer = () => {
+    setIsOpen(!isOpen);
+  };
 
   const renderContent = (): JSX.Element => {
     if (nftsStore.isBusyFetching) {
@@ -28,10 +37,10 @@ export const NFTsList = observer((): JSX.Element => {
     return <NFTs nfts={nfts} />;
   };
 
-  return (
+  const Main = (): JSX.Element => (
     <Box
       p={4}
-      height={`calc(100vh - ${HEADER_HEIGHT}px)`}
+      height="100%"
       overflow="auto"
       boxShadow={8}
       zIndex={9}
@@ -42,6 +51,35 @@ export const NFTsList = observer((): JSX.Element => {
       </Typography>
       {renderContent()}
     </Box>
+  );
+
+  return (
+    <>
+      <Box display={{ xs: "block", md: "none" }}>
+        <Fab
+          variant="circular"
+          color="primary"
+          onClick={toggleDrawer}
+          style={{
+            position: "fixed",
+            bottom: 20,
+            right: 20,
+            zIndex: 1300,
+          }}
+        >
+          <FormatListBulletedIcon />
+        </Fab>
+        <Drawer anchor="right" open={isOpen} onClose={toggleDrawer}>
+          <Main />
+        </Drawer>
+      </Box>
+      <Box
+        height={`calc(100vh - ${HEADER_HEIGHT}px)`}
+        display={{ xs: "none", md: "block" }}
+      >
+        <Main />
+      </Box>
+    </>
   );
 });
 
@@ -56,8 +94,6 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
       nftsStore.editMode = "UPDATE_METADATA";
     }
   };
-
-  // const repeatedNfts = [...nfts, ...nfts, ...nfts, ...nfts, ...nfts];
 
   return (
     <List>
@@ -84,6 +120,7 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
             style={{
               whiteSpace: "nowrap",
               flexShrink: 0,
+              marginLeft: 16,
             }}
           >
             Edit

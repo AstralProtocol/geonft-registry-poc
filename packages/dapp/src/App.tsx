@@ -114,7 +114,7 @@ const Body = observer((): JSX.Element => {
         <Box flexGrow={1}>
           <Map />
         </Box>
-        <Box width="400px">
+        <Box width={{ xs: 0, md: "400px" }}>
           <NFTsList />
         </Box>
       </Box>
