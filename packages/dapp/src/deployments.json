@@ -4,6 +4,68 @@
       "name": "localhost",
       "chainId": "31337",
       "contracts": {
+        "AreaCalculation": {
+          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "int256[2][]",
+                  "name": "_coordinates",
+                  "type": "int256[2][]"
+                }
+              ],
+              "name": "isPolygon",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "int256[2][][][]",
+                  "name": "_coordinates",
+                  "type": "int256[2][][][]"
+                }
+              ],
+              "name": "multiPolygonArea",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "int256[2][][]",
+                  "name": "_coordinates",
+                  "type": "int256[2][][]"
+                }
+              ],
+              "name": "polygonArea",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            }
+          ]
+        },
         "GeoNFT": {
           "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
           "abi": [
@@ -626,92 +688,6 @@
             }
           ]
         },
-        "Trigonometry": {
-          "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-          "abi": [
-            {
-              "inputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "_angle",
-                  "type": "uint256"
-                }
-              ],
-              "name": "sin",
-              "outputs": [
-                {
-                  "internalType": "int256",
-                  "name": "",
-                  "type": "int256"
-                }
-              ],
-              "stateMutability": "pure",
-              "type": "function"
-            }
-          ]
-        },
-        "AreaCalculation": {
-          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-          "abi": [
-            {
-              "inputs": [
-                {
-                  "internalType": "int256[2][]",
-                  "name": "_coordinates",
-                  "type": "int256[2][]"
-                }
-              ],
-              "name": "isPolygon",
-              "outputs": [
-                {
-                  "internalType": "bool",
-                  "name": "",
-                  "type": "bool"
-                }
-              ],
-              "stateMutability": "pure",
-              "type": "function"
-            },
-            {
-              "inputs": [
-                {
-                  "internalType": "int256[2][][][]",
-                  "name": "_coordinates",
-                  "type": "int256[2][][][]"
-                }
-              ],
-              "name": "multiPolygonArea",
-              "outputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "",
-                  "type": "uint256"
-                }
-              ],
-              "stateMutability": "pure",
-              "type": "function"
-            },
-            {
-              "inputs": [
-                {
-                  "internalType": "int256[2][][]",
-                  "name": "_coordinates",
-                  "type": "int256[2][][]"
-                }
-              ],
-              "name": "polygonArea",
-              "outputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "",
-                  "type": "uint256"
-                }
-              ],
-              "stateMutability": "pure",
-              "type": "function"
-            }
-          ]
-        },
         "GeohashUtils": {
           "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
           "abi": [
@@ -1088,6 +1064,30 @@
               "type": "function"
             }
           ]
+        },
+        "Trigonometry": {
+          "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "_angle",
+                  "type": "uint256"
+                }
+              ],
+              "name": "sin",
+              "outputs": [
+                {
+                  "internalType": "int256",
+                  "name": "",
+                  "type": "int256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            }
+          ]
         }
       }
     }
@@ -1098,7 +1098,7 @@
       "chainId": "44787",
       "contracts": {
         "AreaCalculation": {
-          "address": "0x5F4eE0a39EDFDc016E857aC9189bEcf3C2562e7A",
+          "address": "0xFD1D76b2944a0FE061A2753d184ee058363dB894",
           "abi": [
             {
               "inputs": [
@@ -1160,7 +1160,7 @@
           ]
         },
         "GeoNFT": {
-          "address": "0x664dDA8656505f212A4B40D7a7aD0c74A5af9803",
+          "address": "0xDF17E40C8F523edB44e1c8DbE3328e37E6ef6069",
           "abi": [
             {
               "inputs": [],
@@ -1782,7 +1782,7 @@
           ]
         },
         "GeohashUtils": {
-          "address": "0x6b596D0D5216A644ff962a4afFB9a80EEF02018c",
+          "address": "0x4C3dD4768BD8A00103430E8F6E759B2B7DbE572e",
           "abi": [
             {
               "inputs": [
@@ -1835,7 +1835,7 @@
           ]
         },
         "SDRegistry": {
-          "address": "0xa08b2a73B3f9f6E15A38f5d0c9FB4Fe856D9B04a",
+          "address": "0xdFE56595b391cDc7B38b6Ea29feee0E84fe4CCdb",
           "abi": [
             {
               "inputs": [
@@ -2159,7 +2159,7 @@
           ]
         },
         "Trigonometry": {
-          "address": "0x8ff9cC825E86225BbfbFA5Cb26403275195960a3",
+          "address": "0x1429127E953939f2F468153154a763190179580b",
           "abi": [
             {
               "inputs": [

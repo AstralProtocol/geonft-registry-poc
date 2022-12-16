@@ -12,14 +12,13 @@ import {
   Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { walletStore } from "../features/wallet/walletStore";
-import { docsStore } from "../features/docs/docsStore";
+import { NFTId, NFTMetadata } from "../features/nfts/nftsCore";
 import { useNftsStore } from "../features/nfts/nftsStore";
 
 const NFTForm = observer((props: NFTProps) => {
-  const { open, metadata, geojson, closeForm, onAccept } = props;
-  console.log("AddNFTForm metadata", metadata);
+  const { open, geojson, closeForm, onAccept } = props;
   const nftsStore = useNftsStore();
+  const metadata = nftsStore.editNft?.metadata;
 
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
@@ -27,7 +26,6 @@ const NFTForm = observer((props: NFTProps) => {
   const [fileUrl, setFileUrl] = useState(metadata?.image || "");
   const [file, setFile] = useState<File | undefined>(undefined);
 
-  const { ipfsClient } = walletStore;
   const { isBusyMinting } = nftsStore;
 
   const imgSrc = file
@@ -64,8 +62,23 @@ const NFTForm = observer((props: NFTProps) => {
 
   const handleSubmit = async () => {
     nftsStore.isBusyMinting = true;
+    let nftId: NFTId | undefined = undefined;
+
     try {
-      metadata ? await updateNft() : await createNft();
+      const imageUri = file ? await nftsStore.storeImageOnIpfs(file) : "";
+      const newMetadata: NFTMetadata = {
+        name,
+        description,
+        image: imageUri,
+      };
+
+      if (nftsStore.editMode === "UPDATE_METADATA") {
+        await updateNft(newMetadata);
+      }
+
+      if (nftsStore.editMode === "CREATE") {
+        nftId = await createNft(newMetadata);
+      }
     } catch (err) {
       err instanceof Error
         ? setError(err.message)
@@ -78,62 +91,39 @@ const NFTForm = observer((props: NFTProps) => {
     setDescription("");
     setFileUrl("");
     setError("");
-    onAccept();
+    onAccept(nftId);
     handleClose();
     nftsStore.isBusyMinting = false;
   };
 
-  const createNft = async () => {
+  const createNft = async (
+    metadata: NFTMetadata
+  ): Promise<NFTId | undefined> => {
     if (!geojson) {
       throw new Error("GeoJSON is not defined");
     }
 
-    if (!ipfsClient) {
-      throw new Error("IPFS client is not defined");
+    try {
+      const nftId = await nftsStore.mint(metadata, geojson);
+
+      if (!nftId) {
+        throw new Error("Created NFT ID is not defined");
+      }
+      return nftId;
+    } catch (err) {
+      setError("Failed to mint NFT");
+      console.error(error);
     }
-
-    const image = file ? await storeImageOnIpfs(file) : "";
-    const newMetadata = {
-      name,
-      description,
-      image,
-    };
-
-    const metadataURI = await docsStore.writeDocument(newMetadata);
-    await nftsStore.mint(metadataURI, geojson);
   };
 
-  const updateNft = async () => {
-    if (!ipfsClient) {
-      throw new Error("IPFS client is not defined");
-    }
-
-    const image = file ? await storeImageOnIpfs(file) : "";
-    const newMetadata = {
-      name,
-      description,
-      image,
-    };
-
+  const updateNft = async (metadata: NFTMetadata) => {
     const docId = nftsStore.editNft?.metadataURI;
 
     if (!docId) {
       throw new Error("NFT ID is not defined");
     }
 
-    await nftsStore.updateNftMetadata(docId, newMetadata);
-  };
-
-  const storeImageOnIpfs = async (file: File): Promise<string> => {
-    if (!ipfsClient) {
-      throw new Error("IPFS client is not defined");
-    }
-
-    const added = await ipfsClient.add(file, {
-      progress: (prog: any) => console.log(`received: ${prog}`),
-    });
-    const IpfsImagePath = added.path;
-    return IpfsImagePath;
+    await nftsStore.updateNftMetadata(docId, metadata);
   };
 
   return (
@@ -229,7 +219,7 @@ const NFTForm = observer((props: NFTProps) => {
                 fullWidth
                 onClick={handleSubmit}
               >
-                Create NFT
+                {nftsStore.editMode === "CREATE" ? "Create NFT" : "Update NFT"}
               </LoadingButton>
             </Grid>
           </Grid>
@@ -247,10 +237,9 @@ export interface Metadata {
 
 interface NFTProps {
   open: boolean;
-  metadata: Metadata | undefined;
   geojson?: string;
   closeForm: () => void;
-  onAccept: () => void;
+  onAccept: (nftId: NFTId | undefined) => void;
 }
 
 export default NFTForm;

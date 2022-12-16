@@ -2,10 +2,16 @@ import { createContext, useContext } from "react";
 import { makeAutoObservable } from "mobx";
 import { ethers, Contract } from "ethers";
 import { CeramicClient } from "@ceramicnetwork/http-client";
-import { walletStore, WalletStore } from "../wallet/walletStore";
-import { docsStore } from "../docs/docsStore";
+import { create as createIpfsClient, IPFSHTTPClient } from "ipfs-http-client";
+import { WalletStore } from "../wallet/walletStore";
+import {
+  // readCeramicDocument,
+  writeCeramicDocument,
+  updateCeramicDocument,
+} from "../docs/docsCore";
 import {
   NFT,
+  NFTId,
   NFTMetadata,
   getGeoNFTsByOwner,
   mintGeoNFT,
@@ -17,7 +23,9 @@ export class NFTsStore {
   nfts: NFT[] = [];
   nftContract: Contract;
   ceramic: CeramicClient;
+  ipfsClient: IPFSHTTPClient;
   editNft: NFT | null = null;
+  editMode: "CREATE" | "UPDATE_METADATA" | "UPDATE_GEOMETRY" | "IDLE" = "IDLE";
   isBusyMinting = false;
   isBusyFetching = false;
 
@@ -31,6 +39,7 @@ export class NFTsStore {
     this.walletStore = walletStore;
     this.nftContract = nftContract;
     this.ceramic = ceramic;
+    this.ipfsClient = createIpfsClient(ipfsOptions);
   }
 
   fetchNFTs = async (): Promise<void> => {
@@ -61,36 +70,50 @@ export class NFTsStore {
     this.isBusyFetching = false;
   };
 
-  mint = async (metadataURI: string, geojson: string): Promise<void> => {
+  mint = async (metadata: NFTMetadata, geojson: string): Promise<NFTId> => {
     console.log("minting");
     this.isBusyMinting = true;
 
-    try {
-      const { address } = this.walletStore;
+    const { address } = this.walletStore;
 
-      if (!address) {
-        throw new Error("Address not defined");
-      }
-
-      if (!this.nftContract) {
-        throw new Error("GeoNFT contract not initialized");
-      }
-
-      const id = await mintGeoNFT(this.nftContract, address, {
-        metadataURI,
-        geojson,
-      });
-      const metadata = await docsStore.readDocument(metadataURI);
-      const newNFT = {
-        id,
-        metadataURI,
-        metadata,
-        geojson,
-      };
-      this.nfts.push(newNFT);
-    } catch (error) {
-      console.error(error);
+    if (!address) {
+      throw new Error("Address not defined");
     }
+
+    if (!this.nftContract) {
+      throw new Error("GeoNFT contract not initialized");
+    }
+
+    const metadataURI = await writeCeramicDocument<NFTMetadata>(
+      this.ceramic,
+      metadata
+    );
+
+    const id = await mintGeoNFT(this.nftContract, address, {
+      metadataURI,
+      geojson,
+    });
+    // It's redundant, but it may be better to refetch the metadata from Ceramic
+    // const newFetchedMetadata = await readCeramicDocument<NFTMetadata>(
+    //   this.ceramic,
+    //   metadataURI
+    // );
+    const newNFT = {
+      id,
+      metadataURI,
+      metadata,
+      geojson,
+    };
+    this.nfts.push(newNFT);
+    return id;
+  };
+
+  storeImageOnIpfs = async (file: File): Promise<string> => {
+    const added = await this.ipfsClient.add(file, {
+      progress: (prog: any) => console.log(`received: ${prog}`),
+    });
+    const IpfsImagePath = added.path;
+    return IpfsImagePath;
   };
 
   updateNftGeojson = async (
@@ -129,7 +152,7 @@ export class NFTsStore {
     docId: string,
     metadata: NFTMetadata
   ): Promise<void> => {
-    await docsStore.updateDocument(docId, metadata);
+    await updateCeramicDocument<NFTMetadata>(this.ceramic, docId, metadata);
     // Update store nft with the new metadata
     this.nfts = this.nfts.map((nft) => {
       if (nft.metadataURI === docId) {
@@ -139,6 +162,22 @@ export class NFTsStore {
     });
   };
 }
+
+const ipfsOptions = {
+  host: "ipfs.infura.io",
+  port: 5001,
+  protocol: "https",
+  apiPath: "/api/v0",
+  headers: {
+    authorization:
+      "Basic " +
+      Buffer.from(
+        process.env.REACT_APP_PROJECT_ID +
+          ":" +
+          process.env.REACT_APP_PROJECT_SECRET
+      ).toString("base64"),
+  },
+};
 
 export const NftsStoreContext = createContext<NFTsStore | null>(null);
 export const useNftsStore = (): NFTsStore => {

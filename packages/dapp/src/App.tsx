@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { ThemeProvider } from "@mui/material/styles";
-import { Container, CssBaseline, Box, Grid, Typography } from "@mui/material";
-import CeramicClient from "@ceramicnetwork/http-client";
-import { Contract } from "ethers";
-// import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { CssBaseline, Box, Typography } from "@mui/material";
 import theme from "./theme";
-import Wallet from "./components/Wallet";
 import {
   WalletStatusEnums,
   WalletStore,
@@ -16,8 +12,9 @@ import {
 import { NFTsStore, NftsStoreContext } from "./features/nfts/nftsStore";
 import { getGeoNFTContract } from "./features/nfts/nftsCore";
 import { createCeramicClient } from "./features/docs/docsCore";
+import { Header, HEADER_HEIGHT } from "./components/Header";
 import { NFTsList } from "./components/NFTsList";
-import Map from "./components/map/Map";
+import { Map } from "./components/map/Map";
 import { Loading } from "./components/Loading";
 
 const App = () => {
@@ -27,47 +24,62 @@ const App = () => {
     <ThemeProvider theme={theme}>
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
-      <Container maxWidth="xl">
-        <WalletStoreContext.Provider value={walletStore}>
-          <Main />
-        </WalletStoreContext.Provider>
-      </Container>
+      <WalletStoreContext.Provider value={walletStore}>
+        <Main />
+      </WalletStoreContext.Provider>
     </ThemeProvider>
   );
 };
 
-const Main = (): JSX.Element => {
-  return (
-    <Grid container rowSpacing={5}>
-      <Grid item xs={12} mt={4}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Kolektivo Curaçao GeoNFT PoC
-        </Typography>
-        <Box mt={6}>
-          <Wallet />
-        </Box>
-      </Grid>
-      <Grid item xs={12}>
-        <Body />
-      </Grid>
-    </Grid>
-  );
-};
+const Main = observer((): JSX.Element => {
+  const { status, address } = useWalletStore();
+  const connected = status === WalletStatusEnums.CONNECTED && address;
 
-type LoadingStatus = "wallet" | "content" | "idle";
+  const NotConnected = () => {
+    if (status === WalletStatusEnums.LOADING) {
+      return (
+        <Box mt={10}>
+          <Loading>Connecting wallet...</Loading>
+        </Box>
+      );
+    }
+
+    return (
+      <Box mt={10}>
+        <Typography
+          variant="body2"
+          component="h2"
+          color="text.secondary"
+          textAlign="center"
+          gutterBottom
+        >
+          Wallet status: {WalletStatusEnums[status]}
+        </Typography>
+      </Box>
+    );
+  };
+
+  return (
+    <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
+      <Header />
+      <Box mt={`${HEADER_HEIGHT}px`}>
+        {connected ? <Body /> : <NotConnected />}
+      </Box>
+    </Box>
+  );
+});
+
+// Extract to different component to avoid re-rendering on the Main component
 const Body = observer((): JSX.Element => {
-  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>("idle");
-  const [ceramic, setCeramic] = useState<CeramicClient | null>(null);
-  const [nftContract, setNftContract] = useState<Contract | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [nftsStore, setNftsStore] = useState<NFTsStore | null>(null);
 
   const walletStore = useWalletStore();
-  const { status, address, provider } = walletStore;
-  const connected = status === WalletStatusEnums.CONNECTED;
+  const address = walletStore.address as string;
+  const provider = walletStore.provider;
 
   const fetchStoreData = async () => {
-    if (!connected || !address) return;
-
-    setLoadingStatus("content");
+    setIsLoading(true);
     const [ceramic, nftContract] = await Promise.all([
       createCeramicClient(provider, address),
       getGeoNFTContract(provider),
@@ -77,58 +89,32 @@ const Body = observer((): JSX.Element => {
       throw new Error("Ceramic client or NFT contract not created");
     }
 
-    setCeramic(ceramic);
-    setNftContract(nftContract);
-    setLoadingStatus("idle");
+    const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
+    await nftsStore.fetchNFTs();
+
+    setNftsStore(nftsStore);
+    setIsLoading(false);
   };
 
   useEffect(() => {
     fetchStoreData();
-  }, [connected, address]);
+  }, []);
 
-  useEffect(() => {
-    if (status === WalletStatusEnums.LOADING) {
-      setLoadingStatus("wallet");
-    }
-
-    if (status === WalletStatusEnums.DISCONNECTED) {
-      setLoadingStatus("idle");
-    }
-  }, [status]);
-
-  if (loadingStatus === "wallet" || loadingStatus === "content") {
-    const msg =
-      loadingStatus === "wallet"
-        ? "Connecting wallet..."
-        : "Loading content...";
-    return <Loading>{msg}</Loading>;
-  }
-
-  if (!address || !ceramic || !nftContract) {
+  if (isLoading || !nftsStore) {
     return (
-      <Typography
-        variant="body2"
-        component="h2"
-        color="text.secondary"
-        textAlign="center"
-        gutterBottom
-      >
-        Wallet status: {WalletStatusEnums[status]}
-      </Typography>
+      <Box mt={10}>
+        <Loading>Loading NFTs...</Loading>
+      </Box>
     );
   }
 
-  const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
-
-  nftsStore.fetchNFTs();
-
   return (
     <NftsStoreContext.Provider value={nftsStore}>
-      <Box display="flex" gap={4}>
+      <Box display="flex">
         <Box flexGrow={1}>
           <Map />
         </Box>
-        <Box width="400px">
+        <Box width={{ xs: 0, md: "400px" }}>
           <NFTsList />
         </Box>
       </Box>
