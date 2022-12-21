@@ -8,7 +8,10 @@
     "yarn"
   ],
   "private": true,
-  "workspaces": ["packages/dapp", "packages/hardhat-ts"],
+  "workspaces": [
+    "packages/dapp",
+    "packages/hardhat-ts"
+  ],
   "scripts": {
     "dapp:start": "yarn workspace dapp start",
     "dapp:test": "yarn workspace dapp test",

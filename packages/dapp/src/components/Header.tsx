@@ -1,5 +1,6 @@
 import { Box, Typography, AppBar } from "@mui/material";
 import Wallet from "./Wallet";
+import logoImage from "../assets/Medium avatar-3.png";
 
 export const HEADER_HEIGHT = 100;
 
@@ -14,12 +15,7 @@ export const Header = (): JSX.Element => {
         px={2}
       >
         <a href="https://astral.global">
-          <img
-            src="/assets/Medium avatar-3.png"
-            alt="logo"
-            width="50"
-            height="50"
-          />
+          <img src={logoImage} alt="logo" width="50" height="50" />
         </a>
         <Box flexGrow={1} ml={2}>
           <Typography variant="h1" component="h1">
