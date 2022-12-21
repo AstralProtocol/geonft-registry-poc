@@ -16,6 +16,7 @@ import { useNftsStore } from "../../features/nfts/nftsStore";
 import NFTForm from "../NFTForm";
 import { Loading } from "../Loading";
 import { HEADER_HEIGHT } from "../Header";
+import notFoundImage from "../../assets/no-image-found.png";
 import {
   initMap,
   select,
@@ -379,9 +380,7 @@ export const Map = observer((): JSX.Element => {
       // Set popup position on center of feature. Add 10px to compensate for the popup arrow
       // element.style.marginTop = `-${popupHeight + 10}px`;
 
-      const imgSrc = image
-        ? `https://ipfs.io/ipfs/${image}`
-        : "/assets/no-image-found.png";
+      const imgSrc = image ? `https://ipfs.io/ipfs/${image}` : notFoundImage;
 
       if (!popupName || !popupDescription) return;
       popupName.innerHTML = name;

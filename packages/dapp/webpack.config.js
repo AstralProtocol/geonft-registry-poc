@@ -8,7 +8,11 @@ const Dotenv = require("dotenv-webpack");
 
 module.exports = {
   entry: "./src/index.tsx",
-  output: { path: path.join(__dirname, "build"), filename: "index.bundle.js" },
+  output: { 
+    path: path.join(__dirname, "build"), 
+    filename: "index.bundle.js", 
+    assetModuleFilename: 'assets/[name][ext]' 
+  },
   mode: process.env.NODE_ENV || "development",
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
@@ -62,8 +66,8 @@ module.exports = {
         ]
       },
       {
-        test: /\.(jpg|jpeg|png|gif|mp3|svg)$/,
-        use: ["file-loader"],
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
       },
     ],
   },
