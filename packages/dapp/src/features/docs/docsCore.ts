@@ -72,8 +72,11 @@ export const createCeramicClient = async (
     throw new Error("Ceramic did not initialized");
   }
 
+  console.log("setting provider", didProvider);
   await ceramic.did.setProvider(didProvider);
+  console.log("authenticating");
   await ceramic.did.authenticate();
+  console.log("authenticated", ceramic.did.id);
 
   return ceramic;
 };

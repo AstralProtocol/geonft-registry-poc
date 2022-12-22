@@ -44,27 +44,29 @@ export class WalletStore {
       const balance = await web3Provider.getBalance(address);
 
       // Subscribe to accounts change
-      provider.on("accountsChanged", (accounts: string[]) => {
-        console.log(accounts);
-      });
+      if (process.env.NODE_ENV !== "production") {
+        provider.on("accountsChanged", (accounts: string[]) => {
+          console.log(accounts);
+        });
 
-      // Subscribe to chainId change
-      provider.on("chainChanged", (chainId: number) => {
-        console.log("Web3 chainChanged:");
-        console.log(chainId);
-        // dispatch(fetchAcctAndThenLoadNFTs());
-      });
+        // Subscribe to chainId change
+        provider.on("chainChanged", (chainId: number) => {
+          console.log("Web3 chainChanged:");
+          console.log(chainId);
+          // dispatch(fetchAcctAndThenLoadNFTs());
+        });
 
-      provider.on("block", (blockNumber: number) => {
-        console.log(blockNumber);
-        // dispatch(fetchLastBlock());
-      });
+        provider.on("block", (blockNumber: number) => {
+          console.log(blockNumber);
+          // dispatch(fetchLastBlock());
+        });
 
-      // Subscribe to session disconnection
-      provider.on("disconnect", (code: number, reason: string) => {
-        console.log("Web3 disconnect:");
-        console.log(code, reason);
-      });
+        // Subscribe to session disconnection
+        provider.on("disconnect", (code: number, reason: string) => {
+          console.log("Web3 disconnect:");
+          console.log(code, reason);
+        });
+      }
 
       this.address = address;
       this.balance = ethers.utils.formatEther(balance);

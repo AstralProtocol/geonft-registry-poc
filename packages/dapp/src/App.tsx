@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline, Box, Typography } from "@mui/material";
+import { CeramicClient } from "@ceramicnetwork/http-client";
+import { Contract } from "ethers";
 import theme from "./theme";
 import {
   WalletStatusEnums,
@@ -70,8 +72,12 @@ const Main = observer((): JSX.Element => {
 });
 
 // Extract to different component to avoid re-rendering on the Main component
+type Status = {
+  value: "idle" | "loading" | "error";
+  msg?: string;
+};
 const Body = observer((): JSX.Element => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [status, setStatus] = useState<Status>({ value: "idle" });
   const [nftsStore, setNftsStore] = useState<NFTsStore | null>(null);
 
   const walletStore = useWalletStore();
@@ -79,28 +85,62 @@ const Body = observer((): JSX.Element => {
   const provider = walletStore.provider;
 
   const fetchStoreData = async () => {
-    setIsLoading(true);
-    const [ceramic, nftContract] = await Promise.all([
-      createCeramicClient(provider, address),
-      getGeoNFTContract(provider),
-    ]);
+    setStatus({ value: "idle" });
+    let ceramic: CeramicClient | null = null;
+    let nftContract: Contract | null = null;
+
+    try {
+      [ceramic, nftContract] = await Promise.all([
+        createCeramicClient(provider, address),
+        getGeoNFTContract(provider),
+      ]);
+    } catch (error) {
+      console.error(error);
+      setStatus({
+        value: "error",
+        msg: "Error connecting to Ceramic or NFT contract",
+      });
+      return;
+    }
 
     if (!ceramic || !nftContract) {
       throw new Error("Ceramic client or NFT contract not created");
     }
 
-    const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
-    await nftsStore.fetchNFTs();
+    try {
+      const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
+      await nftsStore.fetchNFTs();
 
-    setNftsStore(nftsStore);
-    setIsLoading(false);
+      setNftsStore(nftsStore);
+    } catch (error) {
+      console.error(error);
+      setStatus({ value: "error", msg: "Error fetching NFTs" });
+      return;
+    }
+    setStatus({ value: "idle" });
   };
 
   useEffect(() => {
     fetchStoreData();
   }, []);
 
-  if (isLoading || !nftsStore) {
+  if (status.value === "error") {
+    return (
+      <Box mt={10}>
+        <Typography
+          variant="body2"
+          component="h2"
+          color="text.secondary"
+          textAlign="center"
+          gutterBottom
+        >
+          Error connecting to Ceramic or NFT contract
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (status.value === "loading" || !nftsStore) {
     return (
       <Box mt={10}>
         <Loading>Loading NFTs...</Loading>
