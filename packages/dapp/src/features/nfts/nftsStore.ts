@@ -3,6 +3,7 @@ import { makeAutoObservable } from "mobx";
 import { ethers, Contract } from "ethers";
 import { CeramicClient } from "@ceramicnetwork/http-client";
 import { create as createIpfsClient, IPFSHTTPClient } from "ipfs-http-client";
+import Map from "ol/Map";
 import { WalletStore } from "../wallet/walletStore";
 import {
   // readCeramicDocument,
@@ -26,6 +27,7 @@ export class NFTsStore {
   ipfsClient: IPFSHTTPClient;
   editNft: NFT | null = null;
   editMode: "CREATE" | "UPDATE_METADATA" | "UPDATE_GEOMETRY" | "IDLE" = "IDLE";
+  map: Map | null = null;
   isBusyMinting = false;
   isBusyFetching = false;
 

@@ -11,6 +11,10 @@ import {
   Drawer,
 } from "@mui/material";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+import { MultiPolygon } from "ol/geom";
 import { NFT, NFTId } from "../features/nfts/nftsCore";
 import { useNftsStore } from "../features/nfts/nftsStore";
 import { Loading } from "./Loading";
@@ -95,6 +99,35 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
     }
   };
 
+  const locateNft = (nftId: NFTId) => {
+    const editNft = nfts.find((nft) => nft.id === nftId);
+    const map = nftsStore.map;
+
+    if (editNft && map) {
+      const layers = map.getLayers();
+      const geoNftsLayer = layers
+        .getArray()
+        .find((layer) => layer.get("id") === "geoNfts-layer") as VectorLayer<
+        VectorSource<MultiPolygon>
+      >;
+
+      if (!geoNftsLayer) return;
+
+      const nftFeature = geoNftsLayer.getSource()?.getFeatureById(nftId);
+      const TRANSITION_TIME_MILISECONDS = 1000;
+      const VIEW_PADDING_PIXELS = 100; // padding around the feature extent
+      map.getView().fit(nftFeature?.getGeometry() as MultiPolygon, {
+        duration: TRANSITION_TIME_MILISECONDS,
+        padding: [
+          VIEW_PADDING_PIXELS,
+          VIEW_PADDING_PIXELS,
+          VIEW_PADDING_PIXELS,
+          VIEW_PADDING_PIXELS,
+        ],
+      });
+    }
+  };
+
   return (
     <List>
       {nfts.map((nft, idx) => (
@@ -124,6 +157,14 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
             }}
           >
             Edit
+          </Button>
+          <Button
+            style={{ marginLeft: "4px" }}
+            variant="outlined"
+            title="Locate NFT"
+            onClick={() => locateNft(nft.id)}
+          >
+            <LocationOnIcon />
           </Button>
         </ListItem>
       ))}

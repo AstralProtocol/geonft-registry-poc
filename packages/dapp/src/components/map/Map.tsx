@@ -115,6 +115,7 @@ export const Map = observer((): JSX.Element => {
       positioning: "top-center",
     });
     initMap.addOverlay(popup);
+    nftsStore.map = initMap;
   }, []);
 
   useEffect(() => {
