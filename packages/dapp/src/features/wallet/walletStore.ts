@@ -4,9 +4,13 @@ import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
+const CELO_CHAIN_ID = 42220;
+const ALFAJORES_CHAIN_ID = 44787;
+
 export class WalletStore {
   address: string | null = null;
   balance: string | null = null;
+  currency = "ETH";
   status: WalletStatusEnums = WalletStatusEnums.DISCONNECTED;
   provider: any | null = null;
   private web3Modal: Web3Modal | null = null;
@@ -28,8 +32,9 @@ export class WalletStore {
             package: WalletConnectProvider,
             options: {
               rpc: {
-                44787: "https://alfajores-forno.celo-testnet.org",
-                42220: "https://forno.celo.org",
+                [CELO_CHAIN_ID]: "https://forno.celo.org",
+                [ALFAJORES_CHAIN_ID]:
+                  "https://alfajores-forno.celo-testnet.org",
               },
             },
           },
@@ -41,7 +46,14 @@ export class WalletStore {
       const web3Provider = new ethers.providers.Web3Provider(provider);
       const signer = web3Provider.getSigner();
       const address = await signer.getAddress();
-      const balance = await web3Provider.getBalance(address);
+      const [balance, { chainId }] = await Promise.all([
+        web3Provider.getBalance(address),
+        web3Provider.getNetwork(),
+      ]);
+
+      if ([CELO_CHAIN_ID, ALFAJORES_CHAIN_ID].includes(chainId)) {
+        this.currency = "CELO";
+      }
 
       // Subscribe to accounts change
       if (process.env.NODE_ENV !== "production") {

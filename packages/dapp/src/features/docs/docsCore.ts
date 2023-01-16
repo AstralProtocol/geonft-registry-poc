@@ -1,6 +1,6 @@
 import { CeramicClient } from "@ceramicnetwork/http-client";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
-import ThreeIdResolver from "@ceramicnetwork/3id-did-resolver";
+import { getResolver } from "@ceramicnetwork/3id-did-resolver";
 import { EthereumAuthProvider, ThreeIdConnect } from "@3id/connect";
 import { DID } from "dids";
 
@@ -59,7 +59,7 @@ export const createCeramicClient = async (
   const ceramic = new CeramicClient(DEFAULT_CERAMIC_HOST);
 
   const resolver = {
-    ...ThreeIdResolver.getResolver(ceramic),
+    ...getResolver(ceramic),
   };
 
   const did = new DID({ resolver });
