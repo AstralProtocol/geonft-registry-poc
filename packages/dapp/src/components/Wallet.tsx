@@ -127,7 +127,9 @@ const AddressChip = ({ address }: { address: string }): JSX.Element => {
 };
 
 const BalanceChip = ({ balance }: { balance: string }): JSX.Element => {
-  const formattedBalance = formatBalance(balance) + " ETH";
+  const walletStore = useWalletStore();
+
+  const formattedBalance = formatBalance(balance) + " " + walletStore.currency;
   return (
     <Chip
       icon={<AccountBalanceWalletIcon />}

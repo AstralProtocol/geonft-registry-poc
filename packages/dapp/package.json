@@ -66,6 +66,7 @@
     "dids": "^2.4.3",
     "ethers": "^5.5.1",
     "ipfs-http-client": "^56.0.1",
+    "key-did-resolver": "^2.3.0",
     "mobx": "^6.6.2",
     "mobx-react-lite": "^3.4.0",
     "ol": "^7.1.0",
