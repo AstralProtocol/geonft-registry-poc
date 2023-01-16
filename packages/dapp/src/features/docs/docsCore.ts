@@ -1,44 +1,40 @@
 import { CeramicClient } from "@ceramicnetwork/http-client";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
-import { getResolver as getKeyResolver } from "key-did-resolver";
-import { getResolver as get3IDResolver } from "@ceramicnetwork/3id-did-resolver";
-import { EthereumAuthProvider, ThreeIdConnect } from "@3id/connect";
-import { DID } from "dids";
+import { DIDSession } from "did-session";
+import { EthereumWebAuth, getAccountId } from "@didtools/pkh-ethereum";
+import type { AuthMethod } from "@didtools/cacao";
 
 export const createCeramicClient = async (
   provider: any,
   address: string
 ): Promise<CeramicClient> => {
-  if (!provider || !address) {
-    throw new Error("Wallet or provider not found");
-  }
-
-  console.log("PROVIDER: ", provider);
-  const authProvider = new EthereumAuthProvider(provider, address);
-  const threeIdConnect = new ThreeIdConnect();
-  console.log("connecting to 3id");
-  await threeIdConnect.connect(authProvider);
-
-  const ceramic = new CeramicClient(); // API host: https://ceramic-clay.3boxlabs.com
-
-  const did = new DID({
-    provider: threeIdConnect.getDidProvider(),
-    resolver: {
-      ...get3IDResolver(ceramic),
-      ...getKeyResolver(),
-    },
-  });
-
-  await did.authenticate();
-
-  ceramic.did = did;
-  console.log("ceramic.did:", ceramic.did);
-
-  if (!ceramic.did) {
-    throw new Error("Ceramic did not initialized");
-  }
-
+  const accountId = await getAccountId(provider, address);
+  const authMethod = await EthereumWebAuth.getAuthMethod(provider, accountId);
+  const session = await loadSession(authMethod);
+  const ceramic = new CeramicClient("https://ceramic-clay.3boxlabs.com");
+  ceramic.did = session.did;
   return ceramic;
+};
+
+const loadSession = async (authMethod: AuthMethod): Promise<DIDSession> => {
+  const ONE_WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
+  // TODO: Find a better way to storage the session DID
+  const sessionStr = localStorage.getItem("didsession");
+  let session;
+
+  if (sessionStr) {
+    session = await DIDSession.fromSession(sessionStr);
+  }
+
+  if (!session || (session.hasSession && session.isExpired)) {
+    session = await DIDSession.authorize(authMethod, {
+      resources: ["ceramic://*"],
+      expiresInSecs: ONE_WEEK_IN_SECONDS,
+    });
+    localStorage.setItem("didsession", session.serialize());
+  }
+
+  return session;
 };
 
 // DocumentContent is a generic type that can be passed to define the content of a document
