@@ -269,7 +269,7 @@ describe("geonft", () => {
         .withArgs(ZERO_ADDRESS, other.address, tokenId);
 
       await expect(geonft.burn(tokenId)).to.be.revertedWith(
-        "ERC721: caller is not token owner nor approved'"
+        "ERC721: caller is not token owner or approved'"
       );
 
       expect(await geonft.balanceOf(other.address)).to.equal(1);
