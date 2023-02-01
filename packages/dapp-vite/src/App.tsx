@@ -65,7 +65,7 @@ const Main = observer((): JSX.Element => {
   return (
     <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
       <Header />
-      <Box mt={`${HEADER_HEIGHT}px`}>
+      <Box mt={`${HEADER_HEIGHT}px`} width="100%">
         {connected ? <Body /> : <NotConnected />}
       </Box>
     </Box>
