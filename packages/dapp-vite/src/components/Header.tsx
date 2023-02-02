@@ -22,7 +22,7 @@ export const Header = (): JSX.Element => {
             Kolektivo Curaçao GeoNFT PoC
           </Typography>
         </Box>
-        <Wallet />
+        {/* <Wallet /> */}
       </Box>
     </AppBar>
   );

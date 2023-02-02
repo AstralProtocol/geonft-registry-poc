@@ -375,10 +375,6 @@ export const Map = observer((): JSX.Element => {
       const popupName = element.querySelector("#popup-name");
       const popupDescription = element.querySelector("#popup-description");
       const popupImage = element.querySelector("#popup-image");
-      const popupHeight = element.clientHeight;
-
-      // Set popup position on center of feature. Add 10px to compensate for the popup arrow
-      // element.style.marginTop = `-${popupHeight + 10}px`;
 
       const imgSrc = image ? `https://ipfs.io/ipfs/${image}` : notFoundImage;
 
