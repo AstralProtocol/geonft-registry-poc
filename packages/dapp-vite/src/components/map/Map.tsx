@@ -50,7 +50,6 @@ const popupStyles = {
     backgroundColor: "white",
     boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
     borderRadius: 2,
-    transform: "translateY(-100%)",
     "&:before": {
       content: '""',
       top: "100%",
@@ -112,7 +111,7 @@ export const Map = observer((): JSX.Element => {
     popup = new Overlay({
       element: document.getElementById("overlay") || undefined,
       offset: [0, 0],
-      positioning: "top-center",
+      positioning: "bottom-center",
     });
     initMap.addOverlay(popup);
     nftsStore.map = initMap;
