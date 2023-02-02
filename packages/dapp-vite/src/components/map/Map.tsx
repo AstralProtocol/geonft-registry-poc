@@ -89,7 +89,7 @@ const popupStyles = {
 export const Map = observer((): JSX.Element => {
   const nftsStore = useNftsStore();
   const { nfts } = nftsStore;
-  console.log("MAP NFTS: ", toJS(nfts));
+  // console.log("MAP NFTS: ", toJS(nfts));
 
   const [status, setStatus] = useState<Status>(Status.IDLE);
   const [editionStatus, setEditionStatus] = useState<EditionStatus>(
