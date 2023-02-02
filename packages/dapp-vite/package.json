@@ -15,7 +15,6 @@
     "@didtools/pkh-ethereum": "^0.0.3",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
-    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@mui/icons-material": "^5.11.0",
     "@mui/lab": "^5.0.0-alpha.118",
     "@mui/material": "^5.11.7",
@@ -30,7 +29,6 @@
     "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "vite-plugin-global-polyfill": "^1.0.4",
     "web3": "^1.8.2",
     "web3modal": "^1.9.12"
   },
