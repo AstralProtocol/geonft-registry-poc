@@ -10,10 +10,11 @@
   "private": true,
   "workspaces": [
     "packages/dapp",
+    "packages/dapp-vite",
     "packages/hardhat-ts"
   ],
   "scripts": {
-    "dapp:start": "yarn workspace dapp start",
+    "dapp:start": "yarn workspace dapp-vite dev",
     "dapp:test": "yarn workspace dapp test",
     "dapp:lint": "yarn workspace dapp lint",
     "dapp:format": "yarn workspace dapp format",

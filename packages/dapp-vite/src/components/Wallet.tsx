@@ -62,22 +62,21 @@ const Wallet = observer((): JSX.Element => {
           WALLET
         </Button>
         <Menu anchorEl={anchorEl} open={isOpen} onClose={handleClose}>
-          {connected && (
-            <MenuItem>
-              <AddressChip address={address} />
-            </MenuItem>
-          )}
-          {connected && (
-            <>
-              <MenuItem>
+          {[
+            [
+              // Only display these items if connected
+              <MenuItem key="address">
+                <AddressChip address={address} />
+              </MenuItem>,
+              <MenuItem key="balance">
                 <BalanceChip balance={balance} />
-              </MenuItem>
-              <Divider />
-            </>
-          )}
-          <MenuItem>
-            <WalletButton />
-          </MenuItem>
+              </MenuItem>,
+              <Divider key="divider" />,
+            ].map((item) => connected && item),
+            <MenuItem key="button">
+              <WalletButton />
+            </MenuItem>,
+          ]}
         </Menu>
       </Box>
       <Box display={{ xs: "none", md: "flex" }} alignItems="center" gap={1}>
