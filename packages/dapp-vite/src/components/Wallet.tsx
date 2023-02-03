@@ -15,49 +15,32 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CheckIcon from "@mui/icons-material/Check";
 import { ethers } from "ethers";
 import { useConnect, useDisconnect, useAccount, useBalance } from "wagmi";
-import {
-  useWalletStore,
-  WalletStatusEnums,
-} from "../features/wallet/walletStore";
 
 const Wallet = observer((): JSX.Element => {
-  const { connect, connectors, isLoading: connectIsLoading } = useConnect();
+  const { connect, connectors, isLoading } = useConnect();
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
-  const { data, isLoading: balanceIsLoading } = useBalance({ address });
+  const { data } = useBalance({ address });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const connector = connectors[0];
-  console.log("ADDRESS: ", address);
-  console.log("BALANCE DATA: ", data);
-  console.log("BALANCE IS LOADING: ", balanceIsLoading);
 
+  const connector = connectors[0];
+  const connectWallet = () => connect({ connector });
   const balance = data?.formatted || "0";
   const symbol = data?.symbol || "ETH";
-  // const address = walletStore.address || "";
-  // const balance = walletStore.balance || "";
   const isOpen = Boolean(anchorEl);
 
+  // Auto connect wallet
   // TODO: Disable on production
-  // useEffect(() => {
-  //   const autoConnectWallet = async () => await walletStore.connectWallet();
+  useEffect(() => connectWallet(), []);
 
-  //   autoConnectWallet();
-  // }, []);
-
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  // const connectWallet = async () => await walletStore.connectWallet();
-  // const disconnectWallet = () => walletStore.disconnectWallet();
+  const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) =>
+    setAnchorEl(e.currentTarget);
+  const handleClose = () => setAnchorEl(null);
 
   const WalletButton = (): JSX.Element => (
     <LoadingButton
       variant="contained"
-      loading={connectIsLoading}
+      loading={isLoading}
       onClick={() => (isConnected ? disconnect() : connect({ connector }))}
     >
       {isConnected ? "Disconnect" : "Connect"} Wallet
@@ -81,7 +64,7 @@ const Wallet = observer((): JSX.Element => {
   return (
     <>
       <Box display={{ xs: "block", md: "none" }}>
-        <Button variant="outlined" onClick={handleClick}>
+        <Button variant="outlined" onClick={handleOpen}>
           WALLET
         </Button>
         <Menu anchorEl={anchorEl} open={isOpen} onClose={handleClose}>
