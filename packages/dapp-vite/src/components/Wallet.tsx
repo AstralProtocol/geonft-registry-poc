@@ -14,26 +14,35 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CheckIcon from "@mui/icons-material/Check";
 import { ethers } from "ethers";
+import { useConnect, useDisconnect, useAccount, useBalance } from "wagmi";
 import {
   useWalletStore,
   WalletStatusEnums,
 } from "../features/wallet/walletStore";
 
 const Wallet = observer((): JSX.Element => {
+  const { connect, connectors, isLoading: connectIsLoading } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { address, isConnected } = useAccount();
+  const { data, isLoading: balanceIsLoading } = useBalance({ address });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const connector = connectors[0];
+  console.log("ADDRESS: ", address);
+  console.log("BALANCE DATA: ", data);
+  console.log("BALANCE IS LOADING: ", balanceIsLoading);
 
-  const walletStore = useWalletStore();
-  const connected = walletStore.status === WalletStatusEnums.CONNECTED;
-  const address = walletStore.address || "";
-  const balance = walletStore.balance || "";
+  const balance = data?.formatted || "0";
+  const symbol = data?.symbol || "ETH";
+  // const address = walletStore.address || "";
+  // const balance = walletStore.balance || "";
   const isOpen = Boolean(anchorEl);
 
   // TODO: Disable on production
-  useEffect(() => {
-    const autoConnectWallet = async () => await walletStore.connectWallet();
+  // useEffect(() => {
+  //   const autoConnectWallet = async () => await walletStore.connectWallet();
 
-    autoConnectWallet();
-  }, []);
+  //   autoConnectWallet();
+  // }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -42,18 +51,32 @@ const Wallet = observer((): JSX.Element => {
     setAnchorEl(null);
   };
 
-  const connectWallet = async () => await walletStore.connectWallet();
-  const disconnectWallet = () => walletStore.disconnectWallet();
+  // const connectWallet = async () => await walletStore.connectWallet();
+  // const disconnectWallet = () => walletStore.disconnectWallet();
 
   const WalletButton = (): JSX.Element => (
     <LoadingButton
       variant="contained"
-      loading={walletStore.status === WalletStatusEnums.LOADING}
-      onClick={connected ? disconnectWallet : connectWallet}
+      loading={connectIsLoading}
+      onClick={() => (isConnected ? disconnect() : connect({ connector }))}
     >
-      {connected ? "Disconnect" : "Connect"} Wallet
+      {isConnected ? "Disconnect" : "Connect"} Wallet
     </LoadingButton>
   );
+
+  // Only display these items if connected
+  const menuItems =
+    isConnected && address
+      ? [
+          <MenuItem key="address">
+            <AddressChip address={address} />
+          </MenuItem>,
+          <MenuItem key="balance">
+            <BalanceChip balance={balance} symbol={symbol} />
+          </MenuItem>,
+          <Divider key="divider" />,
+        ]
+      : [];
 
   return (
     <>
@@ -63,16 +86,7 @@ const Wallet = observer((): JSX.Element => {
         </Button>
         <Menu anchorEl={anchorEl} open={isOpen} onClose={handleClose}>
           {[
-            [
-              // Only display these items if connected
-              <MenuItem key="address">
-                <AddressChip address={address} />
-              </MenuItem>,
-              <MenuItem key="balance">
-                <BalanceChip balance={balance} />
-              </MenuItem>,
-              <Divider key="divider" />,
-            ].map((item) => connected && item),
+            ...menuItems,
             <MenuItem key="button">
               <WalletButton />
             </MenuItem>,
@@ -80,8 +94,10 @@ const Wallet = observer((): JSX.Element => {
         </Menu>
       </Box>
       <Box display={{ xs: "none", md: "flex" }} alignItems="center" gap={1}>
-        {connected && <AddressChip address={address} />}
-        {connected && <BalanceChip balance={balance} />}
+        {isConnected && address && <AddressChip address={address} />}
+        {isConnected && address && (
+          <BalanceChip balance={balance} symbol={symbol} />
+        )}
         <Box style={{ marginLeft: "16px" }}>
           <WalletButton />
         </Box>
@@ -132,14 +148,19 @@ const AddressChip = ({ address }: { address: string }): JSX.Element => {
   );
 };
 
-const BalanceChip = ({ balance }: { balance: string }): JSX.Element => {
-  const walletStore = useWalletStore();
-
-  const formattedBalance = formatBalance(balance) + " " + walletStore.currency;
+const BalanceChip = ({
+  balance,
+  symbol,
+}: {
+  balance: string;
+  symbol: string;
+}): JSX.Element => {
+  const formattedBalance = formatBalance(balance);
+  const balanceWithSymbol = `${formattedBalance} ${symbol}`;
   return (
     <Chip
       icon={<AccountBalanceWalletIcon />}
-      label={formattedBalance}
+      label={balanceWithSymbol}
       sx={(theme) => ({
         padding: "8px",
         height: "40px",

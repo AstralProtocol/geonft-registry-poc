@@ -12,14 +12,15 @@ import {
   useWalletStore,
 } from "./features/wallet/walletStore";
 import { NFTsStore, NftsStoreContext } from "./features/nfts/nftsStore";
-import { getGeoNFTContract } from "./features/nfts/nftsCore";
+import { getGeoNFTContract, getGeoNFTsByOwner } from "./features/nfts/nftsCore";
 import { createCeramicClient } from "./features/docs/docsCore";
 import { Header, HEADER_HEIGHT } from "./components/Header";
 import { NFTsList } from "./components/NFTsList";
 import { Map } from "./components/map/Map";
 import { Loading } from "./components/Loading";
 
-import { WagmiConfig, createClient, configureChains, mainnet } from "wagmi";
+import { WagmiConfig, createClient, configureChains } from "wagmi";
+import { localhost, hardhat, mainnet } from "wagmi/chains";
 
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
@@ -28,39 +29,40 @@ import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
 import { InjectedConnector } from "wagmi/connectors/injected";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
-import { useConnect } from "wagmi";
+import { useConnect, useAccount } from "wagmi";
 
 // Configure chains & providers with the Alchemy provider.
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
 const { chains, provider, webSocketProvider } = configureChains(
-  [mainnet],
+  [localhost],
   [publicProvider()]
 );
+console.log("CHAINS: ", chains);
 
 // Set up client
 const client = createClient({
   autoConnect: false,
   connectors: [
     new MetaMaskConnector({ chains }),
-    new CoinbaseWalletConnector({
-      chains,
-      options: {
-        appName: "wagmi",
-      },
-    }),
-    new WalletConnectConnector({
-      chains,
-      options: {
-        qrcode: true,
-      },
-    }),
-    new InjectedConnector({
-      chains,
-      options: {
-        name: "Injected",
-        shimDisconnect: true,
-      },
-    }),
+    // new CoinbaseWalletConnector({
+    //   chains,
+    //   options: {
+    //     appName: "wagmi",
+    //   },
+    // }),
+    // new WalletConnectConnector({
+    //   chains,
+    //   options: {
+    //     qrcode: true,
+    //   },
+    // }),
+    // new InjectedConnector({
+    //   chains,
+    //   options: {
+    //     name: "Injected",
+    //     shimDisconnect: true,
+    //   },
+    // }),
   ],
   provider,
   webSocketProvider,
@@ -74,10 +76,10 @@ const App = () => {
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
       <WagmiConfig client={client}>
-        <Test />
-        {/* <WalletStoreContext.Provider value={walletStore}>
-          <Main />
-        </WalletStoreContext.Provider> */}
+        {/* <Test /> */}
+        {/* <WalletStoreContext.Provider value={walletStore}> */}
+        <Main />
+        {/* </WalletStoreContext.Provider> */}
       </WagmiConfig>
     </ThemeProvider>
   );
@@ -87,6 +89,27 @@ const Test = () => {
   const fuck = useConnect();
   console.log("FUCK: ", fuck);
   const { connect, connectors } = fuck;
+  const { address } = useAccount();
+  console.log("PROVIDER: ", provider({ chainId: 1 }));
+
+  useEffect(() => {
+    if (!address) return;
+
+    console.log("ADDRESS: ", address);
+
+    const fetchCeramicClient = async () => {
+      const ethProvider = Object.assign({}, window.ethereum);
+      const contract = await getGeoNFTContract(ethProvider);
+      const ceramic = await createCeramicClient(ethProvider, address);
+
+      const nfts = await getGeoNFTsByOwner(contract, address, ceramic);
+      console.log("CERAMIC: ", ceramic);
+      console.log("NFTS: ", nfts);
+    };
+
+    fetchCeramicClient();
+  }, [address]);
+
   return (
     <div>
       {connectors.map((connector) => (
@@ -99,11 +122,12 @@ const Test = () => {
 };
 
 const Main = observer((): JSX.Element => {
-  const { status, address } = useWalletStore();
-  const connected = status === WalletStatusEnums.CONNECTED && address;
+  // const { status, address } = useWalletStore();
+  // const connected = status === WalletStatusEnums.CONNECTED && address;
+  const { address, status, isConnected } = useAccount();
 
   const NotConnected = () => {
-    if (status === WalletStatusEnums.LOADING) {
+    if (isConnected) {
       return (
         <Box mt={10}>
           <Loading>Connecting wallet...</Loading>
@@ -121,7 +145,7 @@ const Main = observer((): JSX.Element => {
           width="100%"
           gutterBottom
         >
-          Wallet status: {WalletStatusEnums[status]}
+          Wallet status: {status.toUpperCase()}
         </Typography>
       </Box>
     );
@@ -131,10 +155,14 @@ const Main = observer((): JSX.Element => {
     <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
       <Header />
       <Box mt={`${HEADER_HEIGHT}px`} width="100%">
-        {connected ? <Body /> : <NotConnected />}
+        {isConnected ? <Body2 /> : <NotConnected />}
       </Box>
     </Box>
   );
+});
+
+const Body2 = observer((): JSX.Element => {
+  return <div>HOLA</div>;
 });
 
 // Extract to different component to avoid re-rendering on the Main component
