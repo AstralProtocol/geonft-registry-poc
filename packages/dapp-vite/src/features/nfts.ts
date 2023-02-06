@@ -1,8 +1,8 @@
 import { ethers, BigNumber, Contract } from "ethers";
 import { TransactionReceipt } from "@ethersproject/providers";
 import { CeramicClient } from "@ceramicnetwork/http-client";
-import { readCeramicDocument } from "../docs/docsCore";
-import networkMapping from "../../deployments.json";
+import { readCeramicDocument } from "./docs";
+import networkMapping from "../deployments.json";
 
 export type NFTId = number;
 export interface NFT {

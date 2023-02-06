@@ -11,8 +11,8 @@ import Overlay from "ol/Overlay";
 import GeoJSON from "ol/format/GeoJSON";
 import { getCenter } from "ol/extent";
 import MapBrowserEvent from "ol/MapBrowserEvent";
-import { NFTId } from "../../features/nfts/nftsCore";
-import { useNftsStore } from "../../features/nfts/nftsStore";
+import { NFTId } from "../../features/nfts";
+import { useStore } from "../../store/store";
 import NFTForm from "../NFTForm";
 import { Loading } from "../Loading";
 import { HEADER_HEIGHT } from "../Header";
@@ -26,6 +26,7 @@ import {
   geoNftsLayer,
 } from "./OpenLayersVariables";
 import "ol/ol.css";
+import { useAccount } from "wagmi";
 
 enum Status {
   IDLE,
@@ -86,7 +87,8 @@ const popupStyles = {
 };
 
 export const Map = observer((): JSX.Element => {
-  const nftsStore = useNftsStore();
+  const nftsStore = useStore();
+  const { address } = useAccount();
   const { nfts } = nftsStore;
   // console.log("MAP NFTS: ", toJS(nfts));
 
@@ -276,7 +278,11 @@ export const Map = observer((): JSX.Element => {
       _convertPolygonFeaturesToMultiPolygonFeature(modifiedFeaturesPolygon);
     const nftId = selectedFeature.getId() as number;
     const newGeojson = new GeoJSON().writeFeature(modifiedFeatureMultiPolygon);
-    const success = await nftsStore.updateNftGeojson(nftId, newGeojson);
+    const success = await nftsStore.updateNftGeojson(
+      nftId,
+      newGeojson,
+      address
+    );
 
     if (success) {
       geoNftsLayer.getSource()?.addFeature(modifiedFeatureMultiPolygon);

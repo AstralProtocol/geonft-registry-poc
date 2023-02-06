@@ -15,14 +15,14 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { MultiPolygon } from "ol/geom";
-import { NFT, NFTId } from "../features/nfts/nftsCore";
-import { useNftsStore } from "../features/nfts/nftsStore";
+import { NFT, NFTId } from "../features/nfts";
+import { useStore } from "../store/store";
 import { Loading } from "./Loading";
 import { HEADER_HEIGHT } from "./Header";
 
 export const NFTsList = observer((): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
-  const nftsStore = useNftsStore();
+  const nftsStore = useStore();
   const nfts = nftsStore.nfts;
 
   const toggleDrawer = () => {
@@ -88,7 +88,7 @@ export const NFTsList = observer((): JSX.Element => {
 });
 
 const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
-  const nftsStore = useNftsStore();
+  const nftsStore = useStore();
 
   const editMetadata = (nftId: NFTId) => {
     const editNft = nfts.find((nft) => nft.id === nftId);

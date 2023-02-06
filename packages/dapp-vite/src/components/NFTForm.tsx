@@ -12,12 +12,14 @@ import {
   Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { NFTId, NFTMetadata } from "../features/nfts/nftsCore";
-import { useNftsStore } from "../features/nfts/nftsStore";
+import { NFTId, NFTMetadata } from "../features/nfts";
+import { useStore } from "../store/store";
+import { useAccount } from "wagmi";
 
 const NFTForm = observer((props: NFTProps) => {
   const { open, geojson, closeForm, onAccept } = props;
-  const nftsStore = useNftsStore();
+  const nftsStore = useStore();
+  const { address } = useAccount();
   const metadata = nftsStore.editNft?.metadata;
 
   const [error, setError] = useState("");
@@ -104,7 +106,7 @@ const NFTForm = observer((props: NFTProps) => {
     }
 
     try {
-      const nftId = await nftsStore.mint(metadata, geojson);
+      const nftId = await nftsStore.mint(metadata, geojson, address);
 
       if (!nftId) {
         throw new Error("Created NFT ID is not defined");
