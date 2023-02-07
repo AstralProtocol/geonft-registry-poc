@@ -34,7 +34,6 @@ export const getGeoNFTsByOwner = async (
   const metadataPromises: Promise<NFTMetadata>[] = metadataURIs.map(
     (metadataURI: string) => {
       // We do not await in order to return the Promise
-      console.log("READING METADATA", metadataURI);
       return readCeramicDocument<NFTMetadata>(ceramic, metadataURI);
     }
   );

@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 import { Contract } from "ethers";
 import { CeramicClient } from "@ceramicnetwork/http-client";
 import { create as createIpfsClient, IPFSHTTPClient } from "ipfs-http-client";
@@ -14,16 +14,16 @@ import {
   updateGeoNFTGeojson,
 } from "../features/nfts";
 
+type EditMode = "CREATE" | "UPDATE_METADATA" | "UPDATE_GEOMETRY" | "IDLE";
+
 export class Store {
   nfts: NFT[];
   nftContract: Contract;
   ipfsClient: IPFSHTTPClient;
   ceramic: CeramicClient;
   editNft: NFT | null = null;
-  editMode: "CREATE" | "UPDATE_METADATA" | "UPDATE_GEOMETRY" | "IDLE" = "IDLE";
+  editMode: EditMode = "IDLE";
   map: Map | null = null;
-  isBusyMinting = false;
-  isBusyFetching = false;
 
   constructor(nftContract: Contract, ceramic: CeramicClient, nfts: NFT[]) {
     // This will make the whole class observable to any changes
@@ -40,7 +40,6 @@ export class Store {
     address: string | undefined
   ): Promise<NFTId> => {
     console.log("minting");
-    this.isBusyMinting = true;
 
     if (!address) {
       throw new Error("Address not defined");
@@ -59,7 +58,6 @@ export class Store {
       metadataURI,
       geojson,
     });
-    console.log("NFT ID: ", id);
     // It's redundant, but it may be better to refetch the metadata from Ceramic
     // const newFetchedMetadata = await readCeramicDocument<NFTMetadata>(
     //   this.ceramic,
@@ -120,12 +118,26 @@ export class Store {
   ): Promise<void> => {
     await updateCeramicDocument<NFTMetadata>(this.ceramic, docId, metadata);
     // Update store nft with the new metadata
-    this.nfts = this.nfts.map((nft) => {
+    const updatedNfts = this.nfts.map((nft) => {
       if (nft.metadataURI === docId) {
         return { ...nft, metadata };
       }
       return nft;
     });
+
+    this.setNfts(updatedNfts);
+  };
+
+  setNfts = (nfts: NFT[]): void => {
+    this.nfts = nfts;
+  };
+
+  setEditMode(mode: EditMode): void {
+    this.editMode = mode;
+  }
+
+  setEditNft = (nft: NFT | null): void => {
+    this.editNft = nft;
   };
 }
 

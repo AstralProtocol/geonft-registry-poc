@@ -22,18 +22,14 @@ import { HEADER_HEIGHT } from "./Header";
 
 export const NFTsList = observer((): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
-  const nftsStore = useStore();
-  const nfts = nftsStore.nfts;
+  const store = useStore();
+  const nfts = store.nfts;
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
   };
 
   const renderContent = (): JSX.Element => {
-    if (nftsStore.isBusyFetching) {
-      return <Loading>Loading NFTs...</Loading>;
-    }
-
     if (nfts.length === 0) {
       return <NoNFTsFound />;
     }
@@ -94,8 +90,8 @@ const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
     const editNft = nfts.find((nft) => nft.id === nftId);
 
     if (editNft) {
-      nftsStore.editNft = editNft;
-      nftsStore.editMode = "UPDATE_METADATA";
+      nftsStore.setEditNft(editNft);
+      nftsStore.setEditMode("UPDATE_METADATA");
     }
   };
 

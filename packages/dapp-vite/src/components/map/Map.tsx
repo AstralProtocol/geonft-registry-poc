@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { toJS } from "mobx";
+import { runInAction, toJS } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Button, Box, Typography, createStyles } from "@mui/material";
 import MapOL from "ol/Map";
@@ -87,10 +87,9 @@ const popupStyles = {
 };
 
 export const Map = observer((): JSX.Element => {
-  const nftsStore = useStore();
+  const store = useStore();
   const { address } = useAccount();
-  const { nfts } = nftsStore;
-  // console.log("MAP NFTS: ", toJS(nfts));
+  const { nfts } = store;
 
   const [status, setStatus] = useState<Status>(Status.IDLE);
   const [editionStatus, setEditionStatus] = useState<EditionStatus>(
@@ -116,7 +115,7 @@ export const Map = observer((): JSX.Element => {
       positioning: "bottom-center",
     });
     initMap.addOverlay(popup);
-    nftsStore.map = initMap;
+    store.map = initMap;
   }, []);
 
   useEffect(() => {
@@ -137,7 +136,7 @@ export const Map = observer((): JSX.Element => {
 
   useEffect(() => {
     _editNftMetadata();
-  }, [nftsStore.editNft]);
+  }, [store.editNft]);
 
   useEffect(() => {
     const isDeleteStatus = editionStatus === EditionStatus.DELETE;
@@ -146,7 +145,7 @@ export const Map = observer((): JSX.Element => {
 
   // PUBLIC FUNCTIONS
   const createNft = () => {
-    nftsStore.editMode = "CREATE";
+    store.setEditMode("CREATE");
     setStatus(Status.CREATE);
     draw.setActive(true);
   };
@@ -156,7 +155,7 @@ export const Map = observer((): JSX.Element => {
       alert("Please select a feature to modify");
       return;
     }
-    nftsStore.editMode = "UPDATE_METADATA";
+    store.setEditMode("UPDATE_GEOMETRY");
     const polygonFeatures =
       _convertMultiPolygonFeatureToPolygonFeatures(selectedFeature);
 
@@ -170,7 +169,7 @@ export const Map = observer((): JSX.Element => {
 
   const editMetadata = () => {
     setStatus(Status.EDIT_METADATA);
-    nftsStore.editMode = "UPDATE_METADATA";
+    store.setEditMode("UPDATE_METADATA");
     _setSelectedFeatureAsEditNft();
   };
 
@@ -237,7 +236,7 @@ export const Map = observer((): JSX.Element => {
   };
 
   const _onFormSubmit = (nftId: NFTId | undefined) => {
-    const mode = nftsStore.editMode;
+    const mode = store.editMode;
 
     if (mode === "UPDATE_METADATA") {
       _resetEdition();
@@ -278,11 +277,7 @@ export const Map = observer((): JSX.Element => {
       _convertPolygonFeaturesToMultiPolygonFeature(modifiedFeaturesPolygon);
     const nftId = selectedFeature.getId() as number;
     const newGeojson = new GeoJSON().writeFeature(modifiedFeatureMultiPolygon);
-    const success = await nftsStore.updateNftGeojson(
-      nftId,
-      newGeojson,
-      address
-    );
+    const success = await store.updateNftGeojson(nftId, newGeojson, address);
 
     if (success) {
       geoNftsLayer.getSource()?.addFeature(modifiedFeatureMultiPolygon);
@@ -292,11 +287,9 @@ export const Map = observer((): JSX.Element => {
   };
 
   const _editNftMetadata = () => {
-    const { editNft } = nftsStore;
+    const { editNft } = store;
 
-    if (!editNft) {
-      return;
-    }
+    if (!editNft) return;
 
     setGeojson(editNft.geojson);
     setFormIsOpen(true);
@@ -309,8 +302,6 @@ export const Map = observer((): JSX.Element => {
       return;
     }
 
-    // console.log("SELECTED FEATURE", selectedFeature);
-    // console.log("FEATURE PROPS: ", selectedFeature.getProperties());
     // TODO: Fix this. The created feature lacks the id and properties until full refresh
     const nftId = selectedFeature.getId() as number;
     if (!nftId && nftId !== 0) {
@@ -323,7 +314,7 @@ export const Map = observer((): JSX.Element => {
       throw new Error("NFT not found");
     }
 
-    nftsStore.editNft = editNft;
+    store.setEditNft(editNft);
   };
 
   const _deleteClickedFeature = (map: MapOL, e: MapBrowserEvent<any>) => {
@@ -402,14 +393,13 @@ export const Map = observer((): JSX.Element => {
     draw.setActive(false);
     modify.setActive(false);
     editLayerSource?.clear();
-    nftsStore.editMode = "IDLE";
+    store.setEditMode("IDLE");
     setSelectedFeature(undefined);
   };
 
   return (
     <Box position="relative">
       <Box id="map" width="100%" height={`calc(100vh - ${HEADER_HEIGHT}px)`}>
-        {nftsStore.isBusyFetching && <Loading>Loading NFTs...</Loading>}
         <Box id="overlay" sx={popupStyles.container}>
           <img
             id="popup-image"

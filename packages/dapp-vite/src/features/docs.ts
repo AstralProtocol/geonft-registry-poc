@@ -45,7 +45,6 @@ export const readCeramicDocument = async <DocumentContent>(
 ): Promise<DocumentContent> => {
   console.log("Reading document", docId);
   const doc = await TileDocument.load(ceramic, docId);
-  console.log("DOC: ", doc);
   return doc.content as DocumentContent;
 };
 

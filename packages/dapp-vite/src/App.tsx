@@ -133,9 +133,11 @@ const Main = observer((): JSX.Element => {
         setStatus({ value: "error", msg: "Error connecting to Ceramic" });
         return;
       }
+
       const [contract, ceramic] = result;
 
       const nfts = await getGeoNFTsByOwner(contract, address, ceramic);
+      console.log("NFTS: ", nfts);
       const nftStore = new Store(contract, ceramic, nfts);
       setNftsStore(nftStore);
       setStatus({ value: "idle" });

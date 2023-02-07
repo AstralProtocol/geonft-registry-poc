@@ -22,13 +22,12 @@ const NFTForm = observer((props: NFTProps) => {
   const { address } = useAccount();
   const metadata = nftsStore.editNft?.metadata;
 
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
   const [description, setDescription] = useState(metadata?.description || "");
   const [fileUrl, setFileUrl] = useState(metadata?.image || "");
   const [file, setFile] = useState<File | undefined>(undefined);
-
-  const { isBusyMinting } = nftsStore;
 
   const imgSrc = file
     ? URL.createObjectURL(file)
@@ -59,11 +58,12 @@ const NFTForm = observer((props: NFTProps) => {
 
   const handleClose = () => {
     closeForm();
-    nftsStore.editNft = null;
+    nftsStore.setEditNft(null);
+    // nftsStore.editNft = null;
   };
 
   const handleSubmit = async () => {
-    nftsStore.isBusyMinting = true;
+    setIsLoading(true);
     let nftId: NFTId | undefined = undefined;
 
     try {
@@ -95,7 +95,7 @@ const NFTForm = observer((props: NFTProps) => {
     setError("");
     onAccept(nftId);
     handleClose();
-    nftsStore.isBusyMinting = false;
+    setIsLoading(false);
   };
 
   const createNft = async (
@@ -215,7 +215,7 @@ const NFTForm = observer((props: NFTProps) => {
             </Grid>
             <Grid item>
               <LoadingButton
-                loading={isBusyMinting}
+                loading={isLoading}
                 variant="contained"
                 color="primary"
                 fullWidth

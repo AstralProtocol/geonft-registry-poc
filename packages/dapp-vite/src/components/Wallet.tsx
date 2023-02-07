@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import {
   Box,
@@ -30,7 +30,11 @@ const Wallet = observer((): JSX.Element => {
 
   // Uncomment to auto connect wallet
   // WARNING: Do not enable on production
-  // useEffect(() => connectWallet(), []);
+  useEffect(() => {
+    if (import.meta.env.MODE === "production") return;
+
+    connectWallet();
+  }, []);
 
   const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) =>
     setAnchorEl(e.currentTarget);
