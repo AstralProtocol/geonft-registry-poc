@@ -137,10 +137,10 @@ const Main = observer((): JSX.Element => {
       const [contract, ceramic] = result;
 
       const nfts = await getGeoNFTsByOwner(contract, address, ceramic);
-      console.log("NFTS: ", nfts);
       const nftStore = new Store(contract, ceramic, nfts);
       setNftsStore(nftStore);
       setStatus({ value: "idle" });
+      console.log("NFTS: ", nfts);
     };
 
     fetchStoreData();

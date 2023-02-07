@@ -17,7 +17,6 @@ import VectorSource from "ol/source/Vector";
 import { MultiPolygon } from "ol/geom";
 import { NFT, NFTId } from "../features/nfts";
 import { useStore } from "../store/store";
-import { Loading } from "./Loading";
 import { HEADER_HEIGHT } from "./Header";
 
 export const NFTsList = observer((): JSX.Element => {

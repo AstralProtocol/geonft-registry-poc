@@ -14,7 +14,6 @@ import MapBrowserEvent from "ol/MapBrowserEvent";
 import { NFTId } from "../../features/nfts";
 import { useStore } from "../../store/store";
 import NFTForm from "../NFTForm";
-import { Loading } from "../Loading";
 import { HEADER_HEIGHT } from "../Header";
 import notFoundImage from "../../assets/no-image-found.png";
 import {
@@ -116,7 +115,7 @@ export const Map = observer((): JSX.Element => {
       positioning: "bottom-center",
     });
     initMap.addOverlay(popup);
-    store.map = initMap;
+    store.setMap(initMap);
   }, []);
 
   useEffect(() => {
