@@ -138,9 +138,9 @@ const ipfsOptions = {
     authorization:
       "Basic " +
       Buffer.from(
-        process.env.REACT_APP_PROJECT_ID +
+        import.meta.env.VITE_PROJECT_ID +
           ":" +
-          process.env.REACT_APP_PROJECT_SECRET
+          import.meta.env.VITE_PROJECT_SECRET
       ).toString("base64"),
   },
 };
