@@ -26,16 +26,18 @@ const { chains, provider, webSocketProvider } = configureChains(
 );
 
 // Set up client
+// Use MetaMask connector ir development, WalletConnect in production
 const client = createClient({
   autoConnect: false,
   connectors: [
-    new MetaMaskConnector({ chains }),
-    // new WalletConnectConnector({
-    //   chains,
-    //   options: {
-    //     qrcode: true,
-    //   },
-    // }),
+    import.meta.env.MODE === "production"
+      ? new WalletConnectConnector({
+          chains,
+          options: {
+            qrcode: true,
+          },
+        })
+      : new MetaMaskConnector({ chains }),
   ],
   provider,
   webSocketProvider,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react-lite";
 import {
   Box,
@@ -24,24 +24,31 @@ const Wallet = observer((): JSX.Element => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const connector = connectors[0];
-  const connectWallet = () => connect({ connector });
   const balance = data?.formatted || "0";
   const symbol = data?.symbol || "ETH";
   const isOpen = Boolean(anchorEl);
 
-  // Auto connect wallet
-  // TODO: Disable on production
-  useEffect(() => connectWallet(), []);
+  // Uncomment to auto connect wallet
+  // WARNING: Do not enable on production
+  // useEffect(() => connectWallet(), []);
 
   const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) =>
     setAnchorEl(e.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
+  const connectWallet = () => connect({ connector });
+  const disconnectWallet = () => {
+    localStorage.removeItem("wagmi.wallet");
+    localStorage.removeItem("wagmi.cache");
+    localStorage.removeItem("wagmi.store");
+    disconnect();
+  };
+
   const WalletButton = (): JSX.Element => (
     <LoadingButton
       variant="contained"
       loading={isLoading}
-      onClick={() => (isConnected ? disconnect() : connect({ connector }))}
+      onClick={isConnected ? disconnectWallet : connectWallet}
     >
       {isConnected ? "Disconnect" : "Connect"} Wallet
     </LoadingButton>
