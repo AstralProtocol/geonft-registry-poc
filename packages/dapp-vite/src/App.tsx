@@ -106,9 +106,9 @@ type Status = {
   msg?: string;
 };
 
-const Main = observer((): JSX.Element => {
+const Main = (): JSX.Element => {
   const [status, setStatus] = useState<Status>({ value: "idle" });
-  const [nftsStore, setNftsStore] = useState<Store | null>(null);
+  const [store, setStore] = useState<Store | null>(null);
   const { address } = useAccount();
 
   useEffect(() => {
@@ -137,10 +137,9 @@ const Main = observer((): JSX.Element => {
       const [contract, ceramic] = result;
 
       const nfts = await getGeoNFTsByOwner(contract, address, ceramic);
-      const nftStore = new Store(contract, ceramic, nfts);
-      setNftsStore(nftStore);
+      const store = new Store(contract, ceramic, nfts);
+      setStore(store);
       setStatus({ value: "idle" });
-      console.log("NFTS: ", nfts);
     };
 
     fetchStoreData();
@@ -162,7 +161,7 @@ const Main = observer((): JSX.Element => {
     );
   }
 
-  if (status.value === "loading" || !nftsStore) {
+  if (status.value === "loading" || !store) {
     return (
       <Box mt={10}>
         <Loading>Loading NFTs...</Loading>
@@ -171,7 +170,7 @@ const Main = observer((): JSX.Element => {
   }
 
   return (
-    <StoreContext.Provider value={nftsStore}>
+    <StoreContext.Provider value={store}>
       <Box display="flex">
         <Box flexGrow={1}>
           <Map />
@@ -182,6 +181,6 @@ const Main = observer((): JSX.Element => {
       </Box>
     </StoreContext.Provider>
   );
-});
+};
 
 export default AppWithProviders;

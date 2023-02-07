@@ -140,9 +140,9 @@ export class Store {
     this.editNft = nft;
   };
 
-  setMap = (map: Map): void => {
+  setMap(map: Map): void {
     this.map = map;
-  };
+  }
 }
 
 const ipfsOptions = {

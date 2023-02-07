@@ -83,20 +83,20 @@ export const NFTsList = observer((): JSX.Element => {
 });
 
 const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
-  const nftsStore = useStore();
+  const store = useStore();
 
   const editMetadata = (nftId: NFTId) => {
     const editNft = nfts.find((nft) => nft.id === nftId);
 
     if (editNft) {
-      nftsStore.setEditNft(editNft);
-      nftsStore.setEditMode("UPDATE_METADATA");
+      store.setEditNft(editNft);
+      store.setEditMode("UPDATE_METADATA");
     }
   };
 
   const locateNft = (nftId: NFTId) => {
     const editNft = nfts.find((nft) => nft.id === nftId);
-    const map = nftsStore.map;
+    const map = store.map;
 
     if (editNft && map) {
       const layers = map.getLayers();
