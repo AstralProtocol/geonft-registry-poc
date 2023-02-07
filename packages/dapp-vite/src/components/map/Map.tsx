@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { runInAction, toJS } from "mobx";
 import { observer } from "mobx-react-lite";
-import { Button, Box, Typography, createStyles } from "@mui/material";
+import { Button, Box, Typography } from "@mui/material";
+import { makeStyles } from "@mui/styles";
 import MapOL from "ol/Map";
 import Feature, { FeatureLike } from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
@@ -44,8 +44,8 @@ enum EditionStatus {
 let isDeleteFeatureActive = false;
 let popup: Overlay | null = null;
 
-const popupStyles = {
-  container: createStyles({
+const useStyles = makeStyles({
+  container: {
     position: "relative",
     maxWidth: 200,
     backgroundColor: "white",
@@ -79,15 +79,16 @@ const popupStyles = {
       pointerEvents: "none",
       marginTop: "-1px",
     },
-  }),
-  body: createStyles({
+  },
+  body: {
     color: "black",
     padding: 1,
-  }),
-};
+  },
+});
 
 export const Map = observer((): JSX.Element => {
   const store = useStore();
+  const popupStyles = useStyles();
   const { address } = useAccount();
   const { nfts } = store;
 
@@ -400,7 +401,7 @@ export const Map = observer((): JSX.Element => {
   return (
     <Box position="relative">
       <Box id="map" width="100%" height={`calc(100vh - ${HEADER_HEIGHT}px)`}>
-        <Box id="overlay" sx={popupStyles.container}>
+        <Box id="overlay" className={popupStyles.container}>
           <img
             id="popup-image"
             src=""
@@ -411,8 +412,8 @@ export const Map = observer((): JSX.Element => {
               borderRadius: "8px 8px 0 0",
             }}
           />
-          <Box sx={popupStyles.body}>
-            <Typography id="popup-name" fontSize={16}></Typography>
+          <Box className={popupStyles.body}>
+            <Typography id="popup-name" fontSize={16} paddingX={1}></Typography>
             <Typography id="popup-description" fontSize={13}></Typography>
           </Box>
         </Box>
