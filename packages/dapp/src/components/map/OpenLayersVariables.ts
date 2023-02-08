@@ -1,19 +1,10 @@
-import Map from "ol/Map";
-import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import OSM from "ol/source/OSM";
-import {
-  Select,
-  Draw,
-  Modify,
-  defaults as defaultInteractions,
-} from "ol/interaction";
-import Overlay from "ol/Overlay";
+import { Select, Draw, Modify } from "ol/interaction";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style";
 import { Polygon, MultiPolygon } from "ol/geom";
-import { fromLonLat } from "ol/proj";
 import { singleClick } from "ol/events/condition";
 
 // Setup layers
@@ -98,16 +89,3 @@ export const modify = new Modify({
 });
 
 modify.setActive(false);
-
-// Setup map
-export const initMap = new Map({
-  target: undefined,
-  layers: [cartographicBasemap, geoNftsLayer, editLayer],
-  view: new View({
-    projection: "EPSG:3857",
-    center: fromLonLat([-4.13, 39.48]),
-    zoom: 6,
-  }),
-  interactions: defaultInteractions().extend([select, draw, modify]),
-  controls: [],
-});

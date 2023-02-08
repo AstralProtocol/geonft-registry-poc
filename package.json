@@ -13,13 +13,14 @@
     "packages/hardhat-ts"
   ],
   "scripts": {
+    "dapp:dev": "yarn workspace dapp dev",
+    "dapp:build": "yarn workspace dapp build",
     "dapp:start": "yarn workspace dapp start",
     "dapp:test": "yarn workspace dapp test",
     "dapp:lint": "yarn workspace dapp lint",
     "dapp:format": "yarn workspace dapp format",
     "dapp:check": "yarn workspace dapp checkformat",
     "dapp:type-check": "yarn workspace dapp type-check",
-    "dapp:webpack": "yarn workspace dapp webpack",
     "hardhat:clean": "yarn workspace hardhat-ts clean",
     "hardhat:compile": "yarn workspace hardhat-ts compile",
     "hardhat:watch": "yarn workspace hardhat-ts watch",
