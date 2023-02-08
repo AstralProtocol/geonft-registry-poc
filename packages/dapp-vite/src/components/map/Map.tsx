@@ -3,11 +3,14 @@ import { observer } from "mobx-react-lite";
 import { Button, Box, Typography } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import MapOL from "ol/Map";
+import View from "ol/View";
 import Feature, { FeatureLike } from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { Polygon, MultiPolygon } from "ol/geom";
 import Overlay from "ol/Overlay";
+import { defaults as defaultInteractions } from "ol/interaction";
+import { fromLonLat } from "ol/proj";
 import GeoJSON from "ol/format/GeoJSON";
 import { getCenter } from "ol/extent";
 import MapBrowserEvent from "ol/MapBrowserEvent";
@@ -18,12 +21,12 @@ import { Alert } from "../Alert";
 import { HEADER_HEIGHT } from "../Header";
 import notFoundImage from "../../assets/no-image-found.png";
 import {
-  initMap,
   select,
   draw,
   modify,
   editLayer,
   geoNftsLayer,
+  cartographicBasemap,
 } from "./OpenLayersVariables";
 import "ol/ol.css";
 import { useAccount } from "wagmi";
@@ -104,7 +107,21 @@ export const Map = observer((): JSX.Element => {
   const [confirmTransactionAlert, setConfirmTransactionAlert] = useState(false);
 
   useEffect(() => {
+    const initMap = new MapOL({
+      target: undefined,
+      layers: [cartographicBasemap, geoNftsLayer, editLayer],
+      view: new View({
+        projection: "EPSG:3857",
+        center: fromLonLat([-4.13, 39.48]),
+        zoom: 6,
+      }),
+      interactions: defaultInteractions().extend([select, draw, modify]),
+      controls: [],
+    });
+    console.log("MAP USE EFFECT");
+    console.log("INIT MAP: ", initMap);
     initMap.setTarget("map");
+    console.log("STORE MAP: ", store.map);
     initMap.on("click", (e) => _deleteClickedFeature(initMap, e));
     initMap.on("pointermove", (e) => _showFeatureInfo(initMap, e));
     select.on("select", (e) => {
@@ -118,6 +135,7 @@ export const Map = observer((): JSX.Element => {
     });
     initMap.addOverlay(popup);
     store.setMap(initMap);
+    initMap.render();
   }, []);
 
   useEffect(() => {
