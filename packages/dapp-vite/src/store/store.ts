@@ -1,83 +1,45 @@
 import { createContext, useContext } from "react";
-import { makeAutoObservable } from "mobx";
-import { ethers, Contract } from "ethers";
+import { makeAutoObservable, runInAction } from "mobx";
+import { Contract } from "ethers";
 import { CeramicClient } from "@ceramicnetwork/http-client";
 import { create as createIpfsClient, IPFSHTTPClient } from "ipfs-http-client";
 import Map from "ol/Map";
 import { Buffer } from "buffer";
-import { WalletStore } from "../wallet/walletStore";
-import {
-  // readCeramicDocument,
-  writeCeramicDocument,
-  updateCeramicDocument,
-} from "../docs/docsCore";
+import { writeCeramicDocument, updateCeramicDocument } from "../features/docs";
 import {
   NFT,
   NFTId,
   NFTMetadata,
-  getGeoNFTsByOwner,
   mintGeoNFT,
   updateGeoNFTGeojson,
-} from "./nftsCore";
+} from "../features/nfts";
 
-export class NFTsStore {
-  walletStore: WalletStore;
-  nfts: NFT[] = [];
+type EditMode = "CREATE" | "UPDATE_METADATA" | "UPDATE_GEOMETRY" | "IDLE";
+
+export class Store {
+  nfts: NFT[];
   nftContract: Contract;
-  ceramic: CeramicClient;
   ipfsClient: IPFSHTTPClient;
+  ceramic: CeramicClient;
   editNft: NFT | null = null;
-  editMode: "CREATE" | "UPDATE_METADATA" | "UPDATE_GEOMETRY" | "IDLE" = "IDLE";
+  editMode: EditMode = "IDLE";
   map: Map | null = null;
-  isBusyMinting = false;
-  isBusyFetching = false;
 
-  constructor(
-    walletStore: WalletStore,
-    nftContract: Contract,
-    ceramic: CeramicClient
-  ) {
+  constructor(nftContract: Contract, ceramic: CeramicClient, nfts: NFT[]) {
     // This will make the whole class observable to any changes
     makeAutoObservable(this);
-    this.walletStore = walletStore;
     this.nftContract = nftContract;
     this.ceramic = ceramic;
+    this.nfts = nfts;
     this.ipfsClient = createIpfsClient(ipfsOptions);
   }
 
-  fetchNFTs = async (): Promise<void> => {
-    console.log("fetching");
-    this.isBusyFetching = true;
-
-    try {
-      const { provider, address } = this.walletStore;
-      console.log("provider", provider);
-      const web3Provider = new ethers.providers.Web3Provider(provider);
-
-      if (!web3Provider || !address) {
-        throw new Error("Web3 provider not initialized");
-      }
-
-      // Get a list of NFTs owned by the user
-      console.log("Getting NFTs");
-      const nfts = await getGeoNFTsByOwner(
-        this.nftContract,
-        address,
-        this.ceramic
-      );
-      this.nfts = nfts;
-    } catch (error) {
-      console.error(error);
-    }
-
-    this.isBusyFetching = false;
-  };
-
-  mint = async (metadata: NFTMetadata, geojson: string): Promise<NFTId> => {
+  mint = async (
+    metadata: NFTMetadata,
+    geojson: string,
+    address: string | undefined
+  ): Promise<NFTId> => {
     console.log("minting");
-    this.isBusyMinting = true;
-
-    const { address } = this.walletStore;
 
     if (!address) {
       throw new Error("Address not defined");
@@ -121,10 +83,9 @@ export class NFTsStore {
 
   updateNftGeojson = async (
     nftId: number,
-    geojson: string
+    geojson: string,
+    address: string | undefined
   ): Promise<boolean> => {
-    const { address } = this.walletStore;
-
     if (!address) {
       throw new Error("Address not defined");
     }
@@ -157,13 +118,31 @@ export class NFTsStore {
   ): Promise<void> => {
     await updateCeramicDocument<NFTMetadata>(this.ceramic, docId, metadata);
     // Update store nft with the new metadata
-    this.nfts = this.nfts.map((nft) => {
+    const updatedNfts = this.nfts.map((nft) => {
       if (nft.metadataURI === docId) {
         return { ...nft, metadata };
       }
       return nft;
     });
+
+    this.setNfts(updatedNfts);
   };
+
+  setNfts = (nfts: NFT[]): void => {
+    this.nfts = nfts;
+  };
+
+  setEditMode(mode: EditMode): void {
+    this.editMode = mode;
+  }
+
+  setEditNft = (nft: NFT | null): void => {
+    this.editNft = nft;
+  };
+
+  setMap(map: Map): void {
+    this.map = map;
+  }
 }
 
 const ipfsOptions = {
@@ -175,18 +154,18 @@ const ipfsOptions = {
     authorization:
       "Basic " +
       Buffer.from(
-        process.env.REACT_APP_PROJECT_ID +
+        import.meta.env.VITE_PROJECT_ID +
           ":" +
-          process.env.REACT_APP_PROJECT_SECRET
+          import.meta.env.VITE_PROJECT_SECRET
       ).toString("base64"),
   },
 };
 
-export const NftsStoreContext = createContext<NFTsStore | null>(null);
-export const useNftsStore = (): NFTsStore => {
-  const store = useContext(NftsStoreContext);
+export const StoreContext = createContext<Store | null>(null);
+export const useStore = (): Store => {
+  const store = useContext(StoreContext);
   if (!store) {
-    throw new Error("NFTs store must be used within a WalletStoreProvider");
+    throw new Error("Store must be used within a StoreProvider");
   }
   return store;
 };

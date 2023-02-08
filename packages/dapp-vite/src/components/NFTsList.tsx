@@ -15,25 +15,20 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { MultiPolygon } from "ol/geom";
-import { NFT, NFTId } from "../features/nfts/nftsCore";
-import { useNftsStore } from "../features/nfts/nftsStore";
-import { Loading } from "./Loading";
+import { NFT, NFTId } from "../features/nfts";
+import { useStore } from "../store/store";
 import { HEADER_HEIGHT } from "./Header";
 
 export const NFTsList = observer((): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
-  const nftsStore = useNftsStore();
-  const nfts = nftsStore.nfts;
+  const store = useStore();
+  const nfts = store.nfts;
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
   };
 
   const renderContent = (): JSX.Element => {
-    if (nftsStore.isBusyFetching) {
-      return <Loading>Loading NFTs...</Loading>;
-    }
-
     if (nfts.length === 0) {
       return <NoNFTsFound />;
     }
@@ -88,20 +83,20 @@ export const NFTsList = observer((): JSX.Element => {
 });
 
 const NFTs = ({ nfts }: NFTsProps): JSX.Element => {
-  const nftsStore = useNftsStore();
+  const store = useStore();
 
   const editMetadata = (nftId: NFTId) => {
     const editNft = nfts.find((nft) => nft.id === nftId);
 
     if (editNft) {
-      nftsStore.editNft = editNft;
-      nftsStore.editMode = "UPDATE_METADATA";
+      store.setEditNft(editNft);
+      store.setEditMode("UPDATE_METADATA");
     }
   };
 
   const locateNft = (nftId: NFTId) => {
     const editNft = nfts.find((nft) => nft.id === nftId);
-    const map = nftsStore.map;
+    const map = store.map;
 
     if (editNft && map) {
       const layers = map.getLayers();

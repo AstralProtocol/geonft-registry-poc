@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import {
-  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -12,21 +11,26 @@ import {
   Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { NFTId, NFTMetadata } from "../features/nfts/nftsCore";
-import { useNftsStore } from "../features/nfts/nftsStore";
+import { useAccount } from "wagmi";
+import { NFTId, NFTMetadata } from "../features/nfts";
+import { useStore } from "../store/store";
+import { Alert } from "./Alert";
 
 const NFTForm = observer((props: NFTProps) => {
   const { open, geojson, closeForm, onAccept } = props;
-  const nftsStore = useNftsStore();
+  const nftsStore = useStore();
+  const { address } = useAccount();
   const metadata = nftsStore.editNft?.metadata;
+  const formTitle =
+    nftsStore.editMode === "CREATE" ? "Create GeoNFT" : "Edit GeoNFT";
 
+  const [confirmTransactionAlert, setConfirmTransactionAlert] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
   const [description, setDescription] = useState(metadata?.description || "");
   const [fileUrl, setFileUrl] = useState(metadata?.image || "");
   const [file, setFile] = useState<File | undefined>(undefined);
-
-  const { isBusyMinting } = nftsStore;
 
   const imgSrc = file
     ? URL.createObjectURL(file)
@@ -57,11 +61,11 @@ const NFTForm = observer((props: NFTProps) => {
 
   const handleClose = () => {
     closeForm();
-    nftsStore.editNft = null;
+    nftsStore.setEditNft(null);
   };
 
   const handleSubmit = async () => {
-    nftsStore.isBusyMinting = true;
+    setIsLoading(true);
     let nftId: NFTId | undefined = undefined;
 
     try {
@@ -77,6 +81,7 @@ const NFTForm = observer((props: NFTProps) => {
       }
 
       if (nftsStore.editMode === "CREATE") {
+        setConfirmTransactionAlert(true);
         nftId = await createNft(newMetadata);
       }
     } catch (err) {
@@ -87,13 +92,14 @@ const NFTForm = observer((props: NFTProps) => {
       console.error(err);
     }
 
+    setConfirmTransactionAlert(false);
     setName("");
     setDescription("");
     setFileUrl("");
     setError("");
     onAccept(nftId);
     handleClose();
-    nftsStore.isBusyMinting = false;
+    setIsLoading(false);
   };
 
   const createNft = async (
@@ -104,7 +110,7 @@ const NFTForm = observer((props: NFTProps) => {
     }
 
     try {
-      const nftId = await nftsStore.mint(metadata, geojson);
+      const nftId = await nftsStore.mint(metadata, geojson, address);
 
       if (!nftId) {
         throw new Error("Created NFT ID is not defined");
@@ -128,10 +134,15 @@ const NFTForm = observer((props: NFTProps) => {
 
   return (
     <div>
+      <Alert
+        open={confirmTransactionAlert}
+        severity="info"
+        onClose={() => setConfirmTransactionAlert(false)}
+      >
+        Confirm transaction in your wallet
+      </Alert>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-        <DialogTitle>
-          Create NFT {error && <Alert severity="error">{error}</Alert>}
-        </DialogTitle>
+        <DialogTitle>{formTitle}</DialogTitle>
         <DialogContent>
           <form>
             <label htmlFor="upload-file">
@@ -213,7 +224,7 @@ const NFTForm = observer((props: NFTProps) => {
             </Grid>
             <Grid item>
               <LoadingButton
-                loading={isBusyMinting}
+                loading={isLoading}
                 variant="contained"
                 color="primary"
                 fullWidth
