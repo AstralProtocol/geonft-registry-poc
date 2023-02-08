@@ -14,6 +14,7 @@ import MapBrowserEvent from "ol/MapBrowserEvent";
 import { NFTId } from "../../features/nfts";
 import { useStore } from "../../store/store";
 import NFTForm from "../NFTForm";
+import { Alert } from "../Alert";
 import { HEADER_HEIGHT } from "../Header";
 import notFoundImage from "../../assets/no-image-found.png";
 import {
@@ -100,6 +101,7 @@ export const Map = observer((): JSX.Element => {
   const [selectedFeature, setSelectedFeature] = useState<
     Feature<MultiPolygon> | undefined
   >();
+  const [confirmTransactionAlert, setConfirmTransactionAlert] = useState(false);
 
   useEffect(() => {
     initMap.setTarget("map");
@@ -277,7 +279,9 @@ export const Map = observer((): JSX.Element => {
       _convertPolygonFeaturesToMultiPolygonFeature(modifiedFeaturesPolygon);
     const nftId = selectedFeature.getId() as number;
     const newGeojson = new GeoJSON().writeFeature(modifiedFeatureMultiPolygon);
+    setConfirmTransactionAlert(true);
     const success = await store.updateNftGeojson(nftId, newGeojson, address);
+    setConfirmTransactionAlert(false);
 
     if (success) {
       geoNftsLayer.getSource()?.addFeature(modifiedFeatureMultiPolygon);
@@ -399,6 +403,13 @@ export const Map = observer((): JSX.Element => {
 
   return (
     <Box position="relative">
+      <Alert
+        open={confirmTransactionAlert}
+        onClose={() => setConfirmTransactionAlert(false)}
+        severity="info"
+      >
+        Confirm transaction in your wallet
+      </Alert>
       <Box id="map" width="100%" height={`calc(100vh - ${HEADER_HEIGHT}px)`}>
         <Box id="overlay" className={popupStyles.container}>
           <img

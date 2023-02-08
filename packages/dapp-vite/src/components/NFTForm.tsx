@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import {
-  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -12,16 +11,20 @@ import {
   Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import { useAccount } from "wagmi";
 import { NFTId, NFTMetadata } from "../features/nfts";
 import { useStore } from "../store/store";
-import { useAccount } from "wagmi";
+import { Alert } from "./Alert";
 
 const NFTForm = observer((props: NFTProps) => {
   const { open, geojson, closeForm, onAccept } = props;
   const nftsStore = useStore();
   const { address } = useAccount();
   const metadata = nftsStore.editNft?.metadata;
+  const formTitle =
+    nftsStore.editMode === "CREATE" ? "Create GeoNFT" : "Edit GeoNFT";
 
+  const [confirmTransactionAlert, setConfirmTransactionAlert] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [name, setName] = useState(metadata?.name || "");
@@ -59,7 +62,6 @@ const NFTForm = observer((props: NFTProps) => {
   const handleClose = () => {
     closeForm();
     nftsStore.setEditNft(null);
-    // nftsStore.editNft = null;
   };
 
   const handleSubmit = async () => {
@@ -79,6 +81,7 @@ const NFTForm = observer((props: NFTProps) => {
       }
 
       if (nftsStore.editMode === "CREATE") {
+        setConfirmTransactionAlert(true);
         nftId = await createNft(newMetadata);
       }
     } catch (err) {
@@ -89,6 +92,7 @@ const NFTForm = observer((props: NFTProps) => {
       console.error(err);
     }
 
+    setConfirmTransactionAlert(false);
     setName("");
     setDescription("");
     setFileUrl("");
@@ -130,10 +134,15 @@ const NFTForm = observer((props: NFTProps) => {
 
   return (
     <div>
+      <Alert
+        open={confirmTransactionAlert}
+        severity="info"
+        onClose={() => setConfirmTransactionAlert(false)}
+      >
+        Confirm transaction in your wallet
+      </Alert>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-        <DialogTitle>
-          Create NFT {error && <Alert severity="error">{error}</Alert>}
-        </DialogTitle>
+        <DialogTitle>{formTitle}</DialogTitle>
         <DialogContent>
           <form>
             <label htmlFor="upload-file">
