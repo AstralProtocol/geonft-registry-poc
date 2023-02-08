@@ -1,8 +1,8 @@
 import { ethers, BigNumber, Contract } from "ethers";
 import { TransactionReceipt } from "@ethersproject/providers";
 import { CeramicClient } from "@ceramicnetwork/http-client";
-import { readCeramicDocument } from "../docs/docsCore";
-import networkMapping from "../../deployments.json";
+import { readCeramicDocument } from "./docs";
+import networkMapping from "../deployments.json";
 
 export type NFTId = number;
 export interface NFT {
@@ -34,7 +34,6 @@ export const getGeoNFTsByOwner = async (
   const metadataPromises: Promise<NFTMetadata>[] = metadataURIs.map(
     (metadataURI: string) => {
       // We do not await in order to return the Promise
-      console.log("READING METADATA", metadataURI);
       return readCeramicDocument<NFTMetadata>(ceramic, metadataURI);
     }
   );

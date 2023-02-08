@@ -2,43 +2,65 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline, Box, Typography } from "@mui/material";
-import { CeramicClient } from "@ceramicnetwork/http-client";
-import { Contract } from "ethers";
+import { WagmiConfig, createClient, configureChains } from "wagmi";
+import { localhost } from "wagmi/chains";
+import { publicProvider } from "wagmi/providers/public";
+import { MetaMaskConnector } from "wagmi/connectors/metaMask";
+import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+import { useAccount } from "wagmi";
 import theme from "./theme";
-import {
-  WalletStatusEnums,
-  WalletStore,
-  WalletStoreContext,
-  useWalletStore,
-} from "./features/wallet/walletStore";
-import { NFTsStore, NftsStoreContext } from "./features/nfts/nftsStore";
-import { getGeoNFTContract } from "./features/nfts/nftsCore";
-import { createCeramicClient } from "./features/docs/docsCore";
+import { Store, StoreContext } from "./store/store";
+import { getGeoNFTContract, getGeoNFTsByOwner } from "./features/nfts";
+import { createCeramicClient } from "./features/docs";
 import { Header, HEADER_HEIGHT } from "./components/Header";
 import { NFTsList } from "./components/NFTsList";
 import { Map } from "./components/map/Map";
 import { Loading } from "./components/Loading";
+import { getProvider } from "./utils";
 
-const App = () => {
-  const walletStore = new WalletStore();
+// Configure chains & providers with the Alchemy provider.
+// Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
+const { chains, provider, webSocketProvider } = configureChains(
+  [localhost],
+  [publicProvider()]
+);
 
+// Set up client
+// Use MetaMask connector ir development, WalletConnect in production
+const client = createClient({
+  autoConnect: false,
+  connectors: [
+    import.meta.env.MODE === "production"
+      ? new WalletConnectConnector({
+          chains,
+          options: {
+            qrcode: true,
+          },
+        })
+      : new MetaMaskConnector({ chains }),
+  ],
+  provider,
+  webSocketProvider,
+});
+
+const AppWithProviders = () => {
   return (
     <ThemeProvider theme={theme}>
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
-      <WalletStoreContext.Provider value={walletStore}>
-        <Main />
-      </WalletStoreContext.Provider>
+      <WagmiConfig client={client}>
+        <App />
+      </WagmiConfig>
     </ThemeProvider>
   );
 };
 
-const Main = observer((): JSX.Element => {
-  const { status, address } = useWalletStore();
-  const connected = status === WalletStatusEnums.CONNECTED && address;
+const App = (): JSX.Element => {
+  const { status, isConnected, isConnecting } = useAccount();
 
-  const NotConnected = () => {
-    if (status === WalletStatusEnums.LOADING) {
+  const renderContent = () => {
+    // Connecting wallet
+    if (isConnecting) {
       return (
         <Box mt={10}>
           <Loading>Connecting wallet...</Loading>
@@ -46,83 +68,82 @@ const Main = observer((): JSX.Element => {
       );
     }
 
-    return (
-      <Box mt={10}>
-        <Typography
-          variant="body2"
-          component="h2"
-          color="text.secondary"
-          textAlign="center"
-          gutterBottom
-        >
-          Wallet status: {WalletStatusEnums[status]}
-        </Typography>
-      </Box>
-    );
+    // Wallet not connected or error
+    if (!isConnected && !isConnecting) {
+      return (
+        <Box mt={10}>
+          <Typography
+            variant="body2"
+            component="h2"
+            color="text.secondary"
+            textAlign="center"
+            width="100%"
+            gutterBottom
+          >
+            Wallet status: {status.toUpperCase()}
+          </Typography>
+        </Box>
+      );
+    }
+
+    return <Main />;
   };
 
+  // Wallet connected
   return (
     <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
       <Header />
-      <Box mt={`${HEADER_HEIGHT}px`}>
-        {connected ? <Body /> : <NotConnected />}
+      <Box mt={`${HEADER_HEIGHT}px`} width="100%">
+        {renderContent()}
       </Box>
     </Box>
   );
-});
+};
 
 // Extract to different component to avoid re-rendering on the Main component
 type Status = {
   value: "idle" | "loading" | "error";
   msg?: string;
 };
-const Body = observer((): JSX.Element => {
+
+const Main = (): JSX.Element => {
   const [status, setStatus] = useState<Status>({ value: "idle" });
-  const [nftsStore, setNftsStore] = useState<NFTsStore | null>(null);
-
-  const walletStore = useWalletStore();
-  const address = walletStore.address as string;
-  const provider = walletStore.provider;
-
-  const fetchStoreData = async () => {
-    setStatus({ value: "idle" });
-    let ceramic: CeramicClient | null = null;
-    let nftContract: Contract | null = null;
-
-    try {
-      [ceramic, nftContract] = await Promise.all([
-        createCeramicClient(provider, address),
-        getGeoNFTContract(provider),
-      ]);
-    } catch (error) {
-      console.error(error);
-      setStatus({
-        value: "error",
-        msg: "Error connecting to Ceramic or NFT contract",
-      });
-      return;
-    }
-
-    if (!ceramic || !nftContract) {
-      throw new Error("Ceramic client or NFT contract not created");
-    }
-
-    try {
-      const nftsStore = new NFTsStore(walletStore, nftContract, ceramic);
-      await nftsStore.fetchNFTs();
-
-      setNftsStore(nftsStore);
-    } catch (error) {
-      console.error(error);
-      setStatus({ value: "error", msg: "Error fetching NFTs" });
-      return;
-    }
-    setStatus({ value: "idle" });
-  };
+  const [store, setStore] = useState<Store | null>(null);
+  const { address } = useAccount();
 
   useEffect(() => {
+    if (!address) return;
+
+    const fetchStoreData = async () => {
+      setStatus({ value: "loading" });
+      const ethProvider = getProvider();
+      const result = await Promise.all([
+        getGeoNFTContract(ethProvider),
+        createCeramicClient(ethProvider, address),
+      ]).catch((error) => {
+        console.error(error);
+        setStatus({
+          value: "error",
+          msg: "Error connecting to Ceramic or NFT contract",
+        });
+        return;
+      });
+
+      if (!result) {
+        setStatus({ value: "error", msg: "Error connecting to Ceramic" });
+        return;
+      }
+
+      const [contract, ceramic] = result;
+
+      const nfts = await getGeoNFTsByOwner(contract, address, ceramic);
+      const store = new Store(contract, ceramic, nfts);
+      setStore(store);
+      setStatus({ value: "idle" });
+    };
+
     fetchStoreData();
-  }, []);
+  }, [address]);
 
   if (status.value === "error") {
     return (
@@ -140,7 +161,7 @@ const Body = observer((): JSX.Element => {
     );
   }
 
-  if (status.value === "loading" || !nftsStore) {
+  if (status.value === "loading" || !store) {
     return (
       <Box mt={10}>
         <Loading>Loading NFTs...</Loading>
@@ -149,7 +170,7 @@ const Body = observer((): JSX.Element => {
   }
 
   return (
-    <NftsStoreContext.Provider value={nftsStore}>
+    <StoreContext.Provider value={store}>
       <Box display="flex">
         <Box flexGrow={1}>
           <Map />
@@ -158,8 +179,8 @@ const Body = observer((): JSX.Element => {
           <NFTsList />
         </Box>
       </Box>
-    </NftsStoreContext.Provider>
+    </StoreContext.Provider>
   );
-});
+};
 
-export default App;
+export default AppWithProviders;

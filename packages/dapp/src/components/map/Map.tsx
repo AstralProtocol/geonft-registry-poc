@@ -1,31 +1,35 @@
 import { useState, useEffect } from "react";
-import { toJS } from "mobx";
 import { observer } from "mobx-react-lite";
-import { Button, Box, Typography, createStyles } from "@mui/material";
+import { Button, Box, Typography } from "@mui/material";
+import { makeStyles } from "@mui/styles";
 import MapOL from "ol/Map";
+import View from "ol/View";
 import Feature, { FeatureLike } from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { Polygon, MultiPolygon } from "ol/geom";
 import Overlay from "ol/Overlay";
+import { defaults as defaultInteractions } from "ol/interaction";
+import { fromLonLat } from "ol/proj";
 import GeoJSON from "ol/format/GeoJSON";
 import { getCenter } from "ol/extent";
 import MapBrowserEvent from "ol/MapBrowserEvent";
-import { NFTId } from "../../features/nfts/nftsCore";
-import { useNftsStore } from "../../features/nfts/nftsStore";
+import { NFTId } from "../../features/nfts";
+import { useStore } from "../../store/store";
 import NFTForm from "../NFTForm";
-import { Loading } from "../Loading";
+import { Alert } from "../Alert";
 import { HEADER_HEIGHT } from "../Header";
 import notFoundImage from "../../assets/no-image-found.png";
 import {
-  initMap,
   select,
   draw,
   modify,
   editLayer,
   geoNftsLayer,
+  cartographicBasemap,
 } from "./OpenLayersVariables";
 import "ol/ol.css";
+import { useAccount } from "wagmi";
 
 enum Status {
   IDLE,
@@ -43,14 +47,13 @@ enum EditionStatus {
 let isDeleteFeatureActive = false;
 let popup: Overlay | null = null;
 
-const popupStyles = {
-  container: createStyles({
+const useStyles = makeStyles({
+  container: {
     position: "relative",
     maxWidth: 200,
     backgroundColor: "white",
     boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
     borderRadius: 2,
-    transform: "translateY(-100%)",
     "&:before": {
       content: '""',
       top: "100%",
@@ -79,17 +82,18 @@ const popupStyles = {
       pointerEvents: "none",
       marginTop: "-1px",
     },
-  }),
-  body: createStyles({
+  },
+  body: {
     color: "black",
     padding: 1,
-  }),
-};
+  },
+});
 
 export const Map = observer((): JSX.Element => {
-  const nftsStore = useNftsStore();
-  const { nfts } = nftsStore;
-  console.log("MAP NFTS: ", toJS(nfts));
+  const store = useStore();
+  const popupStyles = useStyles();
+  const { address } = useAccount();
+  const { nfts } = store;
 
   const [status, setStatus] = useState<Status>(Status.IDLE);
   const [editionStatus, setEditionStatus] = useState<EditionStatus>(
@@ -100,9 +104,20 @@ export const Map = observer((): JSX.Element => {
   const [selectedFeature, setSelectedFeature] = useState<
     Feature<MultiPolygon> | undefined
   >();
+  const [confirmTransactionAlert, setConfirmTransactionAlert] = useState(false);
 
   useEffect(() => {
-    initMap.setTarget("map");
+    const initMap = new MapOL({
+      target: "map",
+      layers: [cartographicBasemap, geoNftsLayer, editLayer],
+      view: new View({
+        projection: "EPSG:3857",
+        center: fromLonLat([-4.13, 39.48]),
+        zoom: 6,
+      }),
+      interactions: defaultInteractions().extend([select, draw, modify]),
+      controls: [],
+    });
     initMap.on("click", (e) => _deleteClickedFeature(initMap, e));
     initMap.on("pointermove", (e) => _showFeatureInfo(initMap, e));
     select.on("select", (e) => {
@@ -112,10 +127,21 @@ export const Map = observer((): JSX.Element => {
     popup = new Overlay({
       element: document.getElementById("overlay") || undefined,
       offset: [0, 0],
-      positioning: "top-center",
+      positioning: "bottom-center",
     });
     initMap.addOverlay(popup);
-    nftsStore.map = initMap;
+    store.setMap(initMap);
+
+    return () => {
+      initMap.un("click", (e) => _deleteClickedFeature(initMap, e));
+      initMap.un("pointermove", (e) => _showFeatureInfo(initMap, e));
+      initMap.setTarget(undefined);
+      select.un("select", (e) => {
+        const selectedFeature = e.target.getFeatures().getArray()[0];
+        setSelectedFeature(selectedFeature);
+      });
+      if (popup) initMap.removeOverlay(popup);
+    };
   }, []);
 
   useEffect(() => {
@@ -136,7 +162,7 @@ export const Map = observer((): JSX.Element => {
 
   useEffect(() => {
     _editNftMetadata();
-  }, [nftsStore.editNft]);
+  }, [store.editNft]);
 
   useEffect(() => {
     const isDeleteStatus = editionStatus === EditionStatus.DELETE;
@@ -145,7 +171,7 @@ export const Map = observer((): JSX.Element => {
 
   // PUBLIC FUNCTIONS
   const createNft = () => {
-    nftsStore.editMode = "CREATE";
+    store.setEditMode("CREATE");
     setStatus(Status.CREATE);
     draw.setActive(true);
   };
@@ -155,7 +181,7 @@ export const Map = observer((): JSX.Element => {
       alert("Please select a feature to modify");
       return;
     }
-    nftsStore.editMode = "UPDATE_METADATA";
+    store.setEditMode("UPDATE_GEOMETRY");
     const polygonFeatures =
       _convertMultiPolygonFeatureToPolygonFeatures(selectedFeature);
 
@@ -169,7 +195,7 @@ export const Map = observer((): JSX.Element => {
 
   const editMetadata = () => {
     setStatus(Status.EDIT_METADATA);
-    nftsStore.editMode = "UPDATE_METADATA";
+    store.setEditMode("UPDATE_METADATA");
     _setSelectedFeatureAsEditNft();
   };
 
@@ -236,7 +262,7 @@ export const Map = observer((): JSX.Element => {
   };
 
   const _onFormSubmit = (nftId: NFTId | undefined) => {
-    const mode = nftsStore.editMode;
+    const mode = store.editMode;
 
     if (mode === "UPDATE_METADATA") {
       _resetEdition();
@@ -277,7 +303,9 @@ export const Map = observer((): JSX.Element => {
       _convertPolygonFeaturesToMultiPolygonFeature(modifiedFeaturesPolygon);
     const nftId = selectedFeature.getId() as number;
     const newGeojson = new GeoJSON().writeFeature(modifiedFeatureMultiPolygon);
-    const success = await nftsStore.updateNftGeojson(nftId, newGeojson);
+    setConfirmTransactionAlert(true);
+    const success = await store.updateNftGeojson(nftId, newGeojson, address);
+    setConfirmTransactionAlert(false);
 
     if (success) {
       geoNftsLayer.getSource()?.addFeature(modifiedFeatureMultiPolygon);
@@ -287,11 +315,9 @@ export const Map = observer((): JSX.Element => {
   };
 
   const _editNftMetadata = () => {
-    const { editNft } = nftsStore;
+    const { editNft } = store;
 
-    if (!editNft) {
-      return;
-    }
+    if (!editNft) return;
 
     setGeojson(editNft.geojson);
     setFormIsOpen(true);
@@ -304,8 +330,6 @@ export const Map = observer((): JSX.Element => {
       return;
     }
 
-    // console.log("SELECTED FEATURE", selectedFeature);
-    // console.log("FEATURE PROPS: ", selectedFeature.getProperties());
     // TODO: Fix this. The created feature lacks the id and properties until full refresh
     const nftId = selectedFeature.getId() as number;
     if (!nftId && nftId !== 0) {
@@ -318,7 +342,7 @@ export const Map = observer((): JSX.Element => {
       throw new Error("NFT not found");
     }
 
-    nftsStore.editNft = editNft;
+    store.setEditNft(editNft);
   };
 
   const _deleteClickedFeature = (map: MapOL, e: MapBrowserEvent<any>) => {
@@ -376,10 +400,6 @@ export const Map = observer((): JSX.Element => {
       const popupName = element.querySelector("#popup-name");
       const popupDescription = element.querySelector("#popup-description");
       const popupImage = element.querySelector("#popup-image");
-      const popupHeight = element.clientHeight;
-
-      // Set popup position on center of feature. Add 10px to compensate for the popup arrow
-      // element.style.marginTop = `-${popupHeight + 10}px`;
 
       const imgSrc = image ? `https://ipfs.io/ipfs/${image}` : notFoundImage;
 
@@ -401,15 +421,21 @@ export const Map = observer((): JSX.Element => {
     draw.setActive(false);
     modify.setActive(false);
     editLayerSource?.clear();
-    nftsStore.editMode = "IDLE";
+    store.setEditMode("IDLE");
     setSelectedFeature(undefined);
   };
 
   return (
     <Box position="relative">
+      <Alert
+        open={confirmTransactionAlert}
+        onClose={() => setConfirmTransactionAlert(false)}
+        severity="info"
+      >
+        Confirm transaction in your wallet
+      </Alert>
       <Box id="map" width="100%" height={`calc(100vh - ${HEADER_HEIGHT}px)`}>
-        {nftsStore.isBusyFetching && <Loading>Loading NFTs...</Loading>}
-        <Box id="overlay" sx={popupStyles.container}>
+        <Box id="overlay" className={popupStyles.container}>
           <img
             id="popup-image"
             src=""
@@ -420,8 +446,8 @@ export const Map = observer((): JSX.Element => {
               borderRadius: "8px 8px 0 0",
             }}
           />
-          <Box sx={popupStyles.body}>
-            <Typography id="popup-name" fontSize={16}></Typography>
+          <Box className={popupStyles.body}>
+            <Typography id="popup-name" fontSize={16} paddingX={1}></Typography>
             <Typography id="popup-description" fontSize={13}></Typography>
           </Box>
         </Box>
