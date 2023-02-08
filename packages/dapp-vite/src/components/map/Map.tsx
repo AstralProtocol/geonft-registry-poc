@@ -108,7 +108,7 @@ export const Map = observer((): JSX.Element => {
 
   useEffect(() => {
     const initMap = new MapOL({
-      target: undefined,
+      target: "map",
       layers: [cartographicBasemap, geoNftsLayer, editLayer],
       view: new View({
         projection: "EPSG:3857",
@@ -118,10 +118,6 @@ export const Map = observer((): JSX.Element => {
       interactions: defaultInteractions().extend([select, draw, modify]),
       controls: [],
     });
-    console.log("MAP USE EFFECT");
-    console.log("INIT MAP: ", initMap);
-    initMap.setTarget("map");
-    console.log("STORE MAP: ", store.map);
     initMap.on("click", (e) => _deleteClickedFeature(initMap, e));
     initMap.on("pointermove", (e) => _showFeatureInfo(initMap, e));
     select.on("select", (e) => {
@@ -135,7 +131,17 @@ export const Map = observer((): JSX.Element => {
     });
     initMap.addOverlay(popup);
     store.setMap(initMap);
-    initMap.render();
+
+    return () => {
+      initMap.un("click", (e) => _deleteClickedFeature(initMap, e));
+      initMap.un("pointermove", (e) => _showFeatureInfo(initMap, e));
+      initMap.setTarget(undefined);
+      select.un("select", (e) => {
+        const selectedFeature = e.target.getFeatures().getArray()[0];
+        setSelectedFeature(selectedFeature);
+      });
+      if (popup) initMap.removeOverlay(popup);
+    };
   }, []);
 
   useEffect(() => {
