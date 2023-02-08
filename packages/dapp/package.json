@@ -1,12 +1,17 @@
 {
-  "name": "dapp-vite",
+  "name": "dapp",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "start": "vite preview",
+    "checkformat": "prettier --check --single-quote '**/*.{ts,tsx,css}'",
+    "format": "prettier --write --single-quote '**/*.{ts,tsx,css}'",
+    "lint": "eslint --ext .ts,.tsx .",
+    "test": "jest",
+    "type-check": "tsc"
   },
   "dependencies": {
     "@celo-tools/celo-ethers-wrapper": "^0.3.0",
