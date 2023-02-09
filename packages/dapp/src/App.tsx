@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { observer } from "mobx-react-lite";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline, Box, Typography } from "@mui/material";
 import { WagmiConfig, createClient, configureChains } from "wagmi";
-import { localhost } from "wagmi/chains";
+import { localhost, celoAlfajores } from "wagmi/chains";
 import { publicProvider } from "wagmi/providers/public";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
@@ -18,10 +17,12 @@ import { Map } from "./components/map/Map";
 import { Loading } from "./components/Loading";
 import { getProvider } from "./utils";
 
+const IS_DEVELOPMENT = import.meta.env.MODE === "development";
 // Configure chains & providers with the Alchemy provider.
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
+const mainChain = IS_DEVELOPMENT ? localhost : celoAlfajores;
 const { chains, provider, webSocketProvider } = configureChains(
-  [localhost],
+  [mainChain],
   [publicProvider()]
 );
 
@@ -30,14 +31,14 @@ const { chains, provider, webSocketProvider } = configureChains(
 const client = createClient({
   autoConnect: false,
   connectors: [
-    import.meta.env.MODE === "production"
-      ? new WalletConnectConnector({
+    IS_DEVELOPMENT
+      ? new MetaMaskConnector({ chains })
+      : new WalletConnectConnector({
           chains,
           options: {
             qrcode: true,
           },
-        })
-      : new MetaMaskConnector({ chains }),
+        }),
   ],
   provider,
   webSocketProvider,
