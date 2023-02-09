@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline, Box, Typography } from "@mui/material";
-import { WagmiConfig, createClient, configureChains } from "wagmi";
+import {
+  WagmiConfig,
+  createClient,
+  configureChains,
+  useConnect,
+  useAccount,
+} from "wagmi";
 import { localhost, celoAlfajores } from "wagmi/chains";
 import { publicProvider } from "wagmi/providers/public";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
-import { useAccount } from "wagmi";
+import type { Provider } from "@wagmi/core";
 import theme from "./theme";
 import { Store, StoreContext } from "./store/store";
 import { getGeoNFTContract, getGeoNFTsByOwner } from "./features/nfts";
@@ -58,10 +64,11 @@ const AppWithProviders = () => {
 
 const App = (): JSX.Element => {
   const { status, isConnected, isConnecting } = useAccount();
+  const [provider, setProvider] = useState<Provider | null>(null);
 
   const renderContent = () => {
     // Connecting wallet
-    if (isConnecting) {
+    if (isConnecting || !provider) {
       return (
         <Box mt={10}>
           <Loading>Connecting wallet...</Loading>
@@ -87,13 +94,13 @@ const App = (): JSX.Element => {
       );
     }
 
-    return <Main />;
+    return <Main provider={provider} />;
   };
 
   // Wallet connected
   return (
     <Box bgcolor="#222" display="flex" flexDirection="column" height="100%">
-      <Header />
+      <Header setProvider={setProvider} />
       <Box mt={`${HEADER_HEIGHT}px`} width="100%">
         {renderContent()}
       </Box>
@@ -107,7 +114,7 @@ type Status = {
   msg?: string;
 };
 
-const Main = (): JSX.Element => {
+const Main = ({ provider }: MainProps): JSX.Element => {
   const [status, setStatus] = useState<Status>({ value: "idle" });
   const [store, setStore] = useState<Store | null>(null);
   const { address } = useAccount();
@@ -117,10 +124,9 @@ const Main = (): JSX.Element => {
 
     const fetchStoreData = async () => {
       setStatus({ value: "loading" });
-      const ethProvider = getProvider();
       const result = await Promise.all([
-        getGeoNFTContract(ethProvider),
-        createCeramicClient(ethProvider, address),
+        getGeoNFTContract(provider),
+        createCeramicClient(provider, address),
       ]).catch((error) => {
         console.error(error);
         setStatus({
@@ -183,5 +189,9 @@ const Main = (): JSX.Element => {
     </StoreContext.Provider>
   );
 };
+
+interface MainProps {
+  provider: Provider;
+}
 
 export default AppWithProviders;

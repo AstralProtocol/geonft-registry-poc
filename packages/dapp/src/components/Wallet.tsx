@@ -15,14 +15,16 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CheckIcon from "@mui/icons-material/Check";
 import { ethers } from "ethers";
 import { useConnect, useDisconnect, useAccount, useBalance } from "wagmi";
+import type { Provider } from "@wagmi/core";
 
-const Wallet = observer((): JSX.Element => {
-  const { connect, connectors, isLoading } = useConnect();
+const Wallet = observer(({ setProvider }: WalletProps): JSX.Element => {
+  const { connect, connectors, isLoading, data: connectData } = useConnect();
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
   const { data } = useBalance({ address });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  const provider = connectData?.provider;
   const connector = connectors[0];
   const balance = data?.formatted || "0";
   const symbol = data?.symbol || "ETH";
@@ -35,6 +37,10 @@ const Wallet = observer((): JSX.Element => {
 
     connectWallet();
   }, []);
+
+  useEffect(() => {
+    if (provider) setProvider(provider);
+  }, [provider]);
 
   const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) =>
     setAnchorEl(e.currentTarget);
@@ -99,6 +105,10 @@ const Wallet = observer((): JSX.Element => {
     </>
   );
 });
+
+interface WalletProps {
+  setProvider: (provider: Provider) => void;
+}
 
 const AddressChip = ({ address }: { address: string }): JSX.Element => {
   const [copied, setCopied] = useState(false);

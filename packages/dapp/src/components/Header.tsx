@@ -1,10 +1,11 @@
 import { Box, Typography, AppBar } from "@mui/material";
+import type { Provider } from "@wagmi/core";
 import Wallet from "./Wallet";
 import logoImage from "../assets/Medium avatar-3.png";
 
 export const HEADER_HEIGHT = 100;
 
-export const Header = (): JSX.Element => {
+export const Header = ({ setProvider }: HeaderProps): JSX.Element => {
   return (
     <AppBar position="fixed">
       <Box
@@ -22,8 +23,12 @@ export const Header = (): JSX.Element => {
             Kolektivo Curaçao GeoNFT PoC
           </Typography>
         </Box>
-        <Wallet />
+        <Wallet setProvider={setProvider} />
       </Box>
     </AppBar>
   );
 };
+
+interface HeaderProps {
+  setProvider: (provider: Provider) => void;
+}
