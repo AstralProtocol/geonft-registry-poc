@@ -1,5 +1,9 @@
 # GeoNFT and Spatial Data Registry Proof-of-Concept
 
+## Project Status: Archived Demo  
+
+**This repository contains a demo project developed a few years ago as an exploration of geospatial NFTs for regenerative land management, with the Kolektivo Framework. While the project is no longer actively maintained, we’ve kept the code available as a reference for those interested in its architecture, methodologies, or implementation details. It may still serve as a useful learning resource, but note that dependencies and frameworks may be outdated.**
+
 Monorepo with two packages:
 
 - hardhat-ts: a hardhat typescript project
